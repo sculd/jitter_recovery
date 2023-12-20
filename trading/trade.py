@@ -21,6 +21,9 @@ class TradeManager:
         self.status_per_symbol = defaultdict(algo.jitter_recovery.calculate.Status)
 
     def on_new_minutes(self, symbol, timestamp_epoch_seconds, timestamp_epochs_values):
+        '''
+        timestamp_epochs_values is an arrya of (timestamp, value) tuples.
+        '''
         changes = algo.jitter_recovery.calculate.get_changes_1dim(np.array([tv[1] for tv in timestamp_epochs_values]))
         in_position_before = self.status_per_symbol[symbol].in_position
         self.status_per_symbol[symbol].update(changes, self.trading_param)

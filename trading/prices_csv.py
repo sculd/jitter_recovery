@@ -21,6 +21,7 @@ class BacktestCsvPriceCache:
         self.history_read_i = 0
         self.latest_timestamp_epoch_seconds_by_symbol = defaultdict(int)
         self.latest_timestamp_epoch_seconds = 0
+        self.latest_timestamp_epoch_seconds_truncated_daily = 0
 
         self.trading_manager = None
 
@@ -49,6 +50,12 @@ class BacktestCsvPriceCache:
 
         self.latest_timestamp_epoch_seconds_by_symbol[symbol] = timestamp_epoch_seconds
         self.latest_timestamp_epoch_seconds = timestamp_epoch_seconds
+
+        previous_latest_timestamp_epoch_seconds_truncated_daily = self.latest_timestamp_epoch_seconds_truncated_daily
+        self.latest_timestamp_epoch_seconds_truncated_daily = int(timestamp_epoch_seconds / (24 * 60 * 60)) * (24 * 60 * 60)
+
+        if self.latest_timestamp_epoch_seconds_truncated_daily > previous_latest_timestamp_epoch_seconds_truncated_daily:
+            logging.info(f'start reading a new day: {datetime.datetime.utcfromtimestamp(self.latest_timestamp_epoch_seconds_truncated_daily)}')
 
         while len(self.symbol_serieses[symbol]) > self.windows_minutes:
             self.symbol_serieses[symbol].popleft()

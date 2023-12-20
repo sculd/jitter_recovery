@@ -1,5 +1,6 @@
 import numpy as np
 import datetime, logging
+from collections import defaultdict
 
 
 class ExecutionRecord:
@@ -11,6 +12,14 @@ class ExecutionRecord:
 
     def __str__(self):
         return f'at {datetime.datetime.fromtimestamp(self.epoch_seconds)}, symbol: {self.symbol}, price: {self.price}, volume: {self.volume}, side: {self.side}, direction: {self.direction}, magnitude: {self.magnitude}'
+
+    def to_csv_header(prefix='', suffix=''):
+        def appends(s):
+            return f'{prefix}{s}{suffix}'
+        return f"{appends('epoch_seconds')},{appends('symbol')},{appends('price')}"
+
+    def to_csv_line(self):
+        return f'{self.epoch_seconds},{self.symbol},{self.price}'
 
     def print(self):
         logging.info(str(self))
@@ -33,6 +42,13 @@ class ClosedExecutionRecord:
     def __str__(self):
         return f'enter {self.record_enter}\nexit {self.record_exit}\nduration: {int((self.record_exit.epoch_seconds - self.record_enter.epoch_seconds) / 60)} minutes, profit: {self.get_profit()}, pnl: {self.get_pnl()}'
 
+    def to_csv_header():
+        return ExecutionRecord.to_csv_header(prefix="enter_") + ',' + ExecutionRecord.to_csv_header(prefix="exit_") + ',pnl,duration_mins'
+
+    def to_csv_line(self):
+        duration_mins = int((self.record_exit.epoch_seconds-self.record_enter.epoch_seconds) / 60)
+        return f'{self.record_enter.to_csv_line()},{self.record_exit.to_csv_line()},{self.get_pnl()},{duration_mins}'
+
     def print(self):
         logging.info(str(self))
 
@@ -41,6 +57,9 @@ class ClosedExecutionRecords:
     def __init__(self):
         self.closed_records = []
         self.enter_record = None
+
+    def merge(self, merged):
+        self.closed_records += merged.closed_records
 
     def enter(self, enter_record):
         self.enter_record = enter_record
@@ -64,6 +83,11 @@ class ClosedExecutionRecords:
             cum_pnl += pnl
 
         return cum_pnl
+
+    def to_csv_file(self, csv_file):
+        csv_file.write(f'{ClosedExecutionRecord.to_csv_header()}\n')
+        for closed_record in self.closed_records:
+            csv_file.write(f'{closed_record.to_csv_line()}\n')
 
     def print(self):
         for closed_record in self.closed_records:
@@ -105,8 +129,9 @@ class ExecutionRecords:
 
 class TradeExecution:
     def __init__(self):
-        self.direction = 0   
+        self.direction_per_symbol = defaultdict(int)
         self.execution_records = ExecutionRecords()
+        self.closed_execution_records_per_symbol = defaultdict(ClosedExecutionRecords)
         self.closed_execution_records = ClosedExecutionRecords()
 
     def execute(self, symbol, epoch_seconds, price, side, direction):
@@ -120,18 +145,19 @@ class TradeExecution:
         record = ExecutionRecord(epoch_seconds, symbol, price, volume, side, direction)
         self.execution_records.append_record(record)
 
-        if direction == 1 and self.direction != 1:
-            self.closed_execution_records.enter(record)
+        if direction == 1 and self.direction_per_symbol[symbol] != 1:
+            self.closed_execution_records_per_symbol[symbol].enter(record)
 
-        if direction == -1 and self.direction == 1:
-            closed_record = ClosedExecutionRecord(self.closed_execution_records.enter_record, record)
+        if direction == -1 and self.direction_per_symbol[symbol] == 1:
+            closed_record = ClosedExecutionRecord(self.closed_execution_records_per_symbol[symbol].enter_record, record)
+            self.closed_execution_records_per_symbol[symbol].closed_records.append(closed_record)
             self.closed_execution_records.closed_records.append(closed_record)
             logging.info(f'closed: {closed_record} trades pairs: {len(self.closed_execution_records.closed_records)}, get_cum_profit: {self.closed_execution_records.get_cum_profit()}, cum_pnl: {self.closed_execution_records.get_cum_pnl()}')
 
-        self.direction = direction
+        self.direction_per_symbol[symbol] = direction
 
     def get_out_of_current_position(self, epoch_seconds, price_series, weights):
-        if self.direction != 1:
+        if self.direction_per_symbol[symbol] != 1:
             return
         logging.info(f'at {epoch_seconds}, get_out_of_current_position prices: {price_series.values}, weights: {weights}')
         self.execute(epoch_seconds, price_series, weights, -1)
