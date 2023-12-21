@@ -156,13 +156,6 @@ class TradeExecution:
 
         self.direction_per_symbol[symbol] = direction
 
-    def get_out_of_current_position(self, epoch_seconds, price_series, weights):
-        if self.direction_per_symbol[symbol] != 1:
-            return
-        logging.info(f'at {epoch_seconds}, get_out_of_current_position prices: {price_series.values}, weights: {weights}')
-        self.execute(epoch_seconds, price_series, weights, -1)
-
-
     def print(self):
         self.closed_execution_records.print()
         logging.info(f'closed trades pairs: {len(self.closed_execution_records.closed_records)}, cum_pnl: {self.closed_execution_records.get_cum_pnl()}')

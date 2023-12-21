@@ -13,10 +13,8 @@ def epoch_seconds_to_datetime(timestamp_seconds):
     return t_tz
 
 class TradeManager:
-    def __init__(self, trading_param=None, price_cache=None, trade_execution=None):
+    def __init__(self, trading_param=None, trade_execution=None):
         self.trading_param = trading_param if trading_param is not None else algo.jitter_recovery.calculate.JitterRecoveryTradingParam.get_default_param()
-        self.price_cache = price_cache
-        self.price_cache.set_trading_manager(self)
         self.trade_execution = trade_execution if trade_execution else trading.execution.TradeExecution()
         self.status_per_symbol = defaultdict(algo.jitter_recovery.calculate.Status)
 

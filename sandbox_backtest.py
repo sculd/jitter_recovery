@@ -11,18 +11,18 @@ logging.basicConfig(
     ]
 )
 
+import trading.trade
+trading_manager = trading.trade.TradeManager()
+
 
 
 #filename = "data/okx/csv_okx_20231127_1128.csv"
-filename = "data/okx/csv_okx_20231125_1212.csv"
-#filename = "data/okx/YFII-USDT-SWAP_20231125_1212.csv"
-price_cache = trading.prices_csv.BacktestCsvPriceCache(filename, 60)
+#filename = "data/okx/csv_okx_20231125_1212.csv"
+filename = "data/okx/YFII-USDT-SWAP_20231125_1212.csv"
+price_cache = trading.prices_csv.BacktestCsvPriceCache(trading_manager, filename, 60)
 
 
 logging.info(f"### starting a new backtest at {datetime.datetime.now()}, filename: {filename}")
-
-import trading.trade
-trading_manager = trading.trade.TradeManager(price_cache=price_cache)
 
 while True:
     if price_cache.process_next_candle() is False:
