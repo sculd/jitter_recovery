@@ -88,6 +88,17 @@ class TradeExecution:
             close_result = trade_api.close_positions(position['instId'], 'isolated', posSide=position['posSide'], ccy='')
             logging.info(close_result)
 
+    def execute(self, symbol, epoch_seconds, price, side, direction):
+        '''
+        negative weight meaning short-selling.
+
+        direction: +1 for enter, -1 for leave.
+        '''
+        if direction == 1:
+            return self.enter(symbol, epoch_seconds, side)
+        else:
+            return self.exit(symbol, epoch_seconds)
+
     def enter(self, symbol, epoch_seconds, side):
         '''
         negative weight meaning short-selling.
