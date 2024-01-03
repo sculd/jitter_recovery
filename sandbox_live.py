@@ -23,6 +23,9 @@ import trading.price
 
 logging.info(f"### starting a new live at {datetime.datetime.now()}")
 
+import publish.telegram
+publish.telegram.post_message(f"### starting a new live at {datetime.datetime.now()}")
+
 price_cache = trading.price.PriceCache(trading_manager, 60)
 
 while True:
