@@ -10,8 +10,14 @@ logging.basicConfig(
     ]
 )
 
-import trading.trade
-trading_manager = trading.trade.TradeManager()
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables from .env.
+
+import trading.trade, trading.execution_okx
+
+trade_execution = trading.execution_okx.TradeExecution(target_betsize=200, leverage=50)
+trading_manager = trading.trade.TradeManager(trade_execution=trade_execution)
 
 import trading.price
 

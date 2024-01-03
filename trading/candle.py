@@ -32,7 +32,6 @@ class CandleCache:
                     self.symbol_serieses[symbol].append((copy_timestamp_epoch_seconds, self.symbol_serieses[symbol][-1][1]))
                     copy_timestamp_epoch_seconds += 60
                 insert_new_minute = True
-                self.symbol_serieses[symbol].append((timestamp_epoch_seconds, close_))
 
         self.latest_timestamp_epoch_seconds_by_symbol[symbol] = timestamp_epoch_seconds
         self.latest_timestamp_epoch_seconds = timestamp_epoch_seconds

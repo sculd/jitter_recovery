@@ -1,7 +1,7 @@
 import logging, os, requests
 import trading.execution
 from collections import defaultdict
-
+import publish.telegram
 
 _flag = "0"  # live trading: 0, demo trading: 1
 _api_key = os.environ['OKX_API_KEY']
@@ -122,7 +122,10 @@ class TradeExecution:
         sz_target = self.target_betsize / price / contract_val
         sz = int(sz_target)
 
-        logging.info(f'for {symbol}, target sz: {sz_target}, actual sz: {sz}, delta: {sz - sz_target}, contract_val: {contract_val}')
+        message = f'for {symbol}, target sz: {sz_target}, actual sz: {sz}, delta: {sz - sz_target}, contract_val: {contract_val}'
+        logging.info(message)
+        publish.telegram.post_message(message)
+
         record = trading.execution.ExecutionRecord(epoch_seconds, symbol, price, sz, side, direction)
         self.execution_records.append_record(record)
         
@@ -153,7 +156,9 @@ class TradeExecution:
         '''
         direction = -1
         price = get_current_price(symbol)
-        logging.info(f'at {epoch_seconds}, for {symbol}, prices: {price}, direction: exit, self.direction: {self.direction_per_symbol[symbol]}')
+        message = f'at {epoch_seconds}, for {symbol}, prices: {price}, direction: exit, self.direction: {self.direction_per_symbol[symbol]}'
+        logging.info(message)
+        publish.telegram.post_message(message)
 
         if self.direction_per_symbol[symbol] != 1:
             return
@@ -187,7 +192,9 @@ class TradeExecution:
         self.execution_records.append_record(record)
         closed_record = trading.execution.ClosedExecutionRecord(self.closed_execution_records.enter_record, record)
         self.closed_execution_records.closed_records.append(closed_record)
-        logging.info(f'at {epoch_seconds}, for {symbol}, closed: {closed_record}, trades pairs: {len(self.closed_execution_records.closed_records)}, cum_pnl: {self.closed_execution_records.get_cum_pnl()}')
+        message = f'at {epoch_seconds}, for {symbol}, closed: {closed_record}, trades pairs: {len(self.closed_execution_records.closed_records)}, cum_pnl: {self.closed_execution_records.get_cum_pnl()}'
+        logging.info(message)
+        publish.telegram.post_message(message)
 
         self.direction_per_symbol[symbol] = direction
 
