@@ -108,7 +108,10 @@ class TradeExecution:
         '''
         direction = 1
         price = get_current_price(symbol)
-        logging.info(f'at {epoch_seconds}, for {symbol}, prices: {price}, direction: enter, self.direction: {self.direction_per_symbol[symbol]}')
+
+        message = f'at {epoch_seconds}, for {symbol}, prices: {price}, direction: enter, self.direction: {self.direction_per_symbol[symbol]}'
+        logging.info(message)
+        publish.telegram.post_message(message)
 
         if self.direction_per_symbol[symbol] == 1:
             return
@@ -122,9 +125,7 @@ class TradeExecution:
         sz_target = self.target_betsize / price / contract_val
         sz = int(sz_target)
 
-        message = f'for {symbol}, target sz: {sz_target}, actual sz: {sz}, delta: {sz - sz_target}, contract_val: {contract_val}'
-        logging.info(message)
-        publish.telegram.post_message(message)
+        logging.info(f'for {symbol}, target sz: {sz_target}, actual sz: {sz}, delta: {sz - sz_target}, contract_val: {contract_val}')
 
         record = trading.execution.ExecutionRecord(epoch_seconds, symbol, price, sz, side, direction)
         self.execution_records.append_record(record)
