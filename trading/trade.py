@@ -27,6 +27,6 @@ class TradeManager:
         self.status_per_symbol[symbol].update(changes, self.trading_param)
         if self.status_per_symbol[symbol].in_position != in_position_before:
             direction = 1 if self.status_per_symbol[symbol].in_position == 1 else -1
-            logging.info(f'in_position changes at {epoch_seconds_to_datetime(timestamp_epoch_seconds)} for {symbol} from {in_position_before} to {self.status_per_symbol[symbol].in_position}')
+            logging.info(f'in_position changes at {epoch_seconds_to_datetime(timestamp_epoch_seconds)} for {symbol} from {in_position_before} to {self.status_per_symbol[symbol].in_position} with changes: {changes}')
             self.trade_execution.execute(symbol, timestamp_epoch_seconds, changes['value'], -1, direction)
 
