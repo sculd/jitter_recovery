@@ -157,5 +157,4 @@ class TradeExecution:
         self.direction_per_symbol[symbol] = direction
 
     def print(self):
-        self.closed_execution_records.print()
         logging.info(f'closed trades pairs: {len(self.closed_execution_records.closed_records)}, cum_pnl: {self.closed_execution_records.get_cum_pnl()}')
