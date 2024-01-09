@@ -30,7 +30,7 @@ price_cache = trading.price.PriceCache(trading_manager, 60)
 
 while True:
     trading_manager.trade_execution.print()
-    time.sleep(60)
+    time.sleep(60 * 60)
 
 trading_manager.trade_execution.closed_execution_records.to_csv_file(open(f'live.csv', 'w'))
 
