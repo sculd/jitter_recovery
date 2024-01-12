@@ -53,11 +53,10 @@ class PriceCache:
     def __init__(self, trading_manager, windows_minutes):
         self.candle_cache = trading.candle.CandleCache(trading_manager, windows_minutes=windows_minutes)
 
-        self.symbols = util.symbols.get_swap_symbobls_usdt()
-
         self.ws_connect()
 
     def ws_connect(self):
+        self.symbols = util.symbols.get_swap_symbobls_usdt()
         ws = websocket.WebSocketApp(_ws_address, on_open = self.on_ws_open, on_close = self.on_ws_close, on_message = self.on_ws_message, on_error = self.on_ws_error)
         t = Thread(target=ws.run_forever, kwargs={"sslopt": {"cert_reqs": ssl.CERT_NONE}})
         t.daemon = True
