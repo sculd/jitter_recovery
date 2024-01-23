@@ -5,7 +5,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
     handlers=[
-        logging.FileHandler("logs/{}.log".format("log_live")),
+        logging.FileHandler("logs/{}.log".format("log_live_binance")),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -14,19 +14,18 @@ from dotenv import load_dotenv
 
 load_dotenv()  # take environment variables from .env.
 
-import trading.trade, trading.execution_okx
+import trading.trade, trading.execution
 
-trade_execution = trading.execution_okx.TradeExecution(target_betsize=200, leverage=5)
-trading_manager = trading.trade.TradeManager(trade_execution=trade_execution)
+trading_manager = trading.trade.TradeManager()
 
-import trading.price
+import trading.price_binance
 
-logging.info(f"### starting a new live at {datetime.datetime.now()}")
+logging.info(f"### starting a new binance live at {datetime.datetime.now()}")
 
 import publish.telegram
-publish.telegram.post_message(f"starting a new live at {datetime.datetime.now()}")
+publish.telegram.post_message(f"starting a new binance live at {datetime.datetime.now()}")
 
-price_cache = trading.price.PriceCache(trading_manager, 60)
+price_cache = trading.price_binance.PriceCache(trading_manager, 60)
 
 while True:
     trading_manager.trade_execution.print()

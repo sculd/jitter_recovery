@@ -1,7 +1,7 @@
 import time, os, datetime, logging, json
 import pandas as pd, numpy as np
 import websocket, ssl
-import util.symbols
+import util.symbols_okx
 from collections import defaultdict, deque
 import trading.candle
 import pytz
@@ -56,7 +56,7 @@ class PriceCache:
         self.ws_connect()
 
     def ws_connect(self):
-        self.symbols = util.symbols.get_swap_symbobls_usdt()
+        self.symbols = util.symbols_okx.get_swap_symbobls_usdt()
         ws = websocket.WebSocketApp(_ws_address, on_open = self.on_ws_open, on_close = self.on_ws_close, on_message = self.on_ws_message, on_error = self.on_ws_error)
         t = Thread(target=ws.run_forever, kwargs={"sslopt": {"cert_reqs": ssl.CERT_NONE}})
         t.daemon = True
