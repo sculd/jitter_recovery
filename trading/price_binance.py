@@ -1,9 +1,10 @@
 import datetime, time, os
 import time, os, datetime, logging, json
 import pandas as pd, numpy as np
+import util.binance
 import util.symbols_binance
 
-from binance import BinanceSocketManager
+from binance import ThreadedWebsocketManager
 
 from collections import defaultdict, deque
 import trading.candle
@@ -56,7 +57,7 @@ class PriceCache:
     def __init__(self, trading_manager, windows_minutes):
         self.candle_cache = trading.candle.CandleCache(trading_manager, windows_minutes=windows_minutes)
 
-        self.bm = BinanceSocketManager(util.symbols_binance.get_client())
+        self.bm = ThreadedWebsocketManager(util.binance.get_client())
         self.conn_key = None
 
         self.ws_connect()
@@ -64,14 +65,12 @@ class PriceCache:
 
     def ws_connect(self):
         if self.conn_key is not None:
-            logging.info('stopping the current socket')
-            self.bm.stop_socket(self.conn_key)
+            logging.info('skip stopping the current socket')
 
         self.symbols = util.symbols_binance.get_future_symbobls_usd()
         sl = list(map(lambda s: s.lower() + '@kline_1m', self.symbols))
         logging.info('starting a new socket')
-        self.conn_key = self.bm.start_multiplex_socket(sl, self.on_message)
-        self.bm.start()
+        self.conn_key = self.bm.start_kline_socket(callback=self.on_message, symbol=sl)
 
 
     def on_message(self, msg):

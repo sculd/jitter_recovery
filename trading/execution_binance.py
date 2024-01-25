@@ -2,13 +2,13 @@ import logging, os, requests
 import trading.execution
 from collections import defaultdict
 import publish.telegram
-import util.symbols_binance
+import util.binance
 
 
 
 class TradeExecution:
     def __init__(self, target_betsize, leverage):
-        self.client = util.symbols_binance.get_client()
+        self.client = util.binance.get_client()
         self.target_betsize = target_betsize
         self.leverage = leverage
         self.direction_per_symbol = defaultdict(int)

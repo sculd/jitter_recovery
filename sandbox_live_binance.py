@@ -14,9 +14,10 @@ from dotenv import load_dotenv
 
 load_dotenv()  # take environment variables from .env.
 
-import trading.trade, trading.execution
+import trading.trade, trading.execution_binance
 
-trading_manager = trading.trade.TradeManager()
+trade_execution = trading.execution_binance.TradeExecution(target_betsize=50, leverage=5)
+trading_manager = trading.trade.TradeManager(trade_execution=trade_execution)
 
 import trading.price_binance
 
