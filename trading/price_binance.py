@@ -3,7 +3,7 @@ import time, os, datetime, logging, json
 import pandas as pd, numpy as np
 import util.symbols_binance
 
-from binance.websockets import BinanceSocketManager
+from binance import BinanceSocketManager
 
 from collections import defaultdict, deque
 import trading.candle
