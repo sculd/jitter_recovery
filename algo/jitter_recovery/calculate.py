@@ -132,7 +132,9 @@ def add_trading_columns(df_feature, jitter_recover_trading_param):
             if ch_from_lowest_since_enter > jitter_recover_trading_param.exit_jumpt_threshold:
                 in_position = 0
         elif df_feature.ch_largest.values[i_decision] > jitter_recover_trading_param.jump_thresholdv \
-            and df_feature.ch_since_largest.values[i_decision] < jitter_recover_trading_param.drop_from_jump_threshold: 
+            and df_feature.ch_since_largest.values[i_decision] < jitter_recover_trading_param.drop_from_jump_threshold \
+            and df_feature.distance_largest_ch.values[i_decision]  < 10 \
+            and df_feature.distance_largest_ch.values[i_decision]  > 0: 
             in_position = 1
             value_at_enter = v
             lowest_since_enter = df_feature.value.values[i]
