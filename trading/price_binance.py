@@ -1,5 +1,5 @@
 import datetime, time, os
-import time, os, datetime, logging, json
+import time, os, datetime, logging, json, threading
 import pandas as pd, numpy as np
 import util.binance
 import util.symbols_binance
@@ -57,24 +57,47 @@ class PriceCache:
     def __init__(self, trading_manager, windows_minutes):
         self.candle_cache = trading.candle.CandleCache(trading_manager, windows_minutes=windows_minutes)
 
-        self.bm = ThreadedWebsocketManager(util.binance.get_client())
+        self.bm = ThreadedWebsocketManager()
+        self.bm.start()
         self.conn_key = None
 
         self.ws_connect()
 
+        # monitoring the error
+        monitor_thread = threading.Thread(target = self.monitor_stream, daemon = True)
+        monitor_thread.start()
+
 
     def ws_connect(self):
         if self.conn_key is not None:
-            logging.info('skip stopping the current socket')
+            logging.info(f'stopping the current socket')
+            self.bm.stop()
+            time.sleep(2)
 
         self.symbols = util.symbols_binance.get_future_symbobls_usd()
         sl = list(map(lambda s: s.lower() + '@kline_1m', self.symbols))
         logging.info('starting a new socket')
-        self.conn_key = self.bm.start_kline_socket(callback=self.on_message, symbol=sl)
+
+        self.stream_error = False
+        self.conn_key = self.bm.start_multiplex_socket(callback=self.on_message, streams=sl)
+
+
+    def monitor_stream(self):
+        logging.info('monitor_stream starts')
+        while True:
+            time.sleep(1)
+            if self.stream_error == True:
+                self.ws_connect()
 
 
     def on_message(self, msg):
         global _msg_cnt
+
+        if 'data' not in msg:
+            print(f'{msg} doees not have data, stream_error detected')
+            self.stream_error = True
+            return
+        
         msg_data = msg['data']
         if msg_data["e"] != "kline":
             print(f'{msg} is not candle msg, skipping')
