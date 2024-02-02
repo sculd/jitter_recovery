@@ -30,12 +30,23 @@ date_str_20230930 = "2023-09-30"
 
 
 base_okx = 'data/okx'
-df_okx_20231127_1128 = pd.read_parquet(f'{base_okx}/df_okx_20231127_1128.parquet')
-df_okx_20231126_1129 = pd.read_parquet(f'{base_okx}/df_okx_20231126_1129.parquet')
-df_okx_20231126_1201 = pd.read_parquet(f'{base_okx}/df_okx_20231126_1201.parquet')
-df_okx_20231125_1204 = pd.read_parquet(f'{base_okx}/df_okx_20231125_1204.parquet')
-df_okx_20231205_1212 = pd.read_parquet(f'{base_okx}/df_okx_20231205_1212.parquet')
-df_okx_20231125_1212 = pd.read_parquet(f'{base_okx}/df_okx_20231125_1212.parquet')
+base_binance = 'data/binance'
+# the aggregation bug was fixed from the data below.
+df_okx_20240106_0109 = pd.read_parquet(f'{base_okx}/df_okx_20240106_0109.parquet')
+df_okx_20240101_0109 = pd.read_parquet(f'{base_okx}/df_okx_20240101_0109.parquet')
+df_okx_20231201_1215 = pd.read_parquet(f'{base_okx}/df_okx_20231201_1215.parquet')
+df_okx_20231216_1231 = pd.read_parquet(f'{base_okx}/df_okx_20231216_1231.parquet')
+df_okx_20231201_1231 = pd.read_parquet(f'{base_okx}/df_okx_20231201_1231.parquet')
+df_okx_20240109_0110 = pd.read_parquet(f'{base_okx}/df_okx_20240109_0110.parquet')
+df_okx_20240110_0113 = pd.read_parquet(f'{base_okx}/df_okx_20240110_0113.parquet')
+df_okx_20240115_0117 = pd.read_parquet(f'{base_okx}/df_okx_20240115_0117.parquet')
+df_okx_20240101_0115 = pd.read_parquet(f'{base_okx}/df_okx_20240101_0115.parquet')
+df_okx_20240104_0107 = pd.read_parquet(f'{base_okx}/df_okx_20240104_0107.parquet')
+df_okx_20240116_0131 = pd.read_parquet(f'{base_okx}/df_okx_20240116_0131.parquet')
+df_okx_20240101_0131 = pd.read_parquet(f'{base_okx}/df_okx_20240101_0131.parquet')
+df_binance_20240122_0123 = pd.read_parquet(f'{base_binance}/df_binance_20240122_0123.parquet')
+df_binance_20240122_0124 = pd.read_parquet(f'{base_binance}/df_binance_20240122_0124.parquet')
+df_binance_20240125_0130 = pd.read_parquet(f'{base_binance}/df_binance_20240125_0130.parquet')
 
 
 def get_close_between_datetime(df, sample_period_minutes, symbols, start_datetime_str, end_datetime_str, if_2023=True):

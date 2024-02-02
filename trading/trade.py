@@ -13,8 +13,13 @@ def epoch_seconds_to_datetime(timestamp_seconds):
     return t_tz
 
 class TradeManager:
-    def __init__(self, trading_param=None, trade_execution=None):
-        self.trading_param = trading_param if trading_param is not None else algo.jitter_recovery.calculate.JitterRecoveryTradingParam.get_default_param()
+    def __init__(self, is_long_term, trading_param=None, trade_execution=None):
+        if not is_long_term:
+            default_trading_param = algo.jitter_recovery.calculate.JitterRecoveryTradingParam.get_default_param_longterm()
+        else:
+            default_trading_param = algo.jitter_recovery.calculate.JitterRecoveryTradingParam.get_default_param()
+
+        self.trading_param = trading_param if trading_param is not None else default_trading_param
         self.trade_execution = trade_execution if trade_execution else trading.execution.TradeExecution()
         self.status_per_symbol = defaultdict(algo.jitter_recovery.calculate.Status)
 
@@ -22,7 +27,8 @@ class TradeManager:
         '''
         timestamp_epochs_values is an arrya of (timestamp, value) tuples.
         '''
-        changes = algo.jitter_recovery.calculate.get_changes_1dim(np.array([tv[1] for tv in timestamp_epochs_values]))
+        w = self.trading_param.jitter_recover_feature_param.jump_window
+        changes = algo.jitter_recovery.calculate.get_changes_1dim(np.array([tv[1] for tv in list(timestamp_epochs_values)[-w:]]))
         in_position_before = self.status_per_symbol[symbol].in_position
         self.status_per_symbol[symbol].update(changes, self.trading_param)
         if self.status_per_symbol[symbol].in_position != in_position_before:
