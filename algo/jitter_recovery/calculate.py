@@ -210,11 +210,9 @@ def add_trading_columns(df_feature, jitter_recover_trading_param):
                 if ch_from_lowest_since_enter > jitter_recover_trading_param.exit_jumpt_threshold:
                     in_position = 0
             else:
-                #'''
-                if ch_from_lowest_since_enter > 0.1 \
+                if ch_from_lowest_since_enter > jitter_recover_trading_param.jump_threshold / 4.0 \
                     and timedelta_since_position_enter >= 5:
                     in_position = 0
-                #'''
 
                 if ch_from_enter > jitter_recover_trading_param.exit_jumpt_threshold:
                     in_position = 0
