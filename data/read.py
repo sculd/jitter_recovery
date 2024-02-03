@@ -47,6 +47,8 @@ df_okx_20240101_0131 = pd.read_parquet(f'{base_okx}/df_okx_20240101_0131.parquet
 df_binance_20240122_0123 = pd.read_parquet(f'{base_binance}/df_binance_20240122_0123.parquet')
 df_binance_20240122_0124 = pd.read_parquet(f'{base_binance}/df_binance_20240122_0124.parquet')
 df_binance_20240125_0130 = pd.read_parquet(f'{base_binance}/df_binance_20240125_0130.parquet')
+df_binance_20240130_0201 = pd.read_parquet(f'{base_binance}/df_binance_20240130_0201.parquet')
+df_binance_20240125_0202 = pd.read_parquet(f'{base_binance}/df_binance_20240125_0202.parquet')
 
 
 def get_close_between_datetime(df, sample_period_minutes, symbols, start_datetime_str, end_datetime_str, if_2023=True):
