@@ -27,6 +27,8 @@ def get_dfsts(df, trading_param):
         symbol_with_jumps.append(symbol)
         
         df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.jitter_recovery_feature_param)
+        del dfs
+        del dfs_
         df_trading = algo.jitter_recovery.calculate.add_trading_columns(df_feature, trading_param)
         
         for column in df_feature.columns:
@@ -35,24 +37,12 @@ def get_dfsts(df, trading_param):
         for column in df_trading.columns:
             dfst_trading.loc[symbol, column] = df_trading[column].values
 
+        del df_feature
+        del df_trading
+
     print(f'symbol_with_jumps: {len((symbol_with_jumps))}')
     return dfst_feature, dfst_trading
 
-
-def get_dfst_trading(df, symbol_with_jumps, trading_param):
-    dfi = df.set_index(['timestamp', 'symbol'])
-    dfst_trading = df.set_index(['symbol', 'timestamp'])
-
-    for i, symbol in enumerate(symbol_with_jumps):
-        if 'USDT' not in symbol: continue
-        dfs = dfi.xs(symbol, level=1)
-        print(f'{i} symbol: {symbol}')
-        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.jitter_recovery_feature_param)
-        df_trading = algo.jitter_recovery.calculate.add_trading_columns(df_feature, trading_param)
-        for column in df_trading.columns:
-            dfst_trading.loc[symbol, column] = df_trading[column].values
-    
-    return dfst_trading
 
 def investigate_symbol(df, symbol_investigate, trading_param, figsize=None):
     dfi = df.set_index(['timestamp', 'symbol'])
@@ -79,7 +69,7 @@ def investigate_symbol(df, symbol_investigate, trading_param, figsize=None):
 
     i_head = df_trading.index.get_loc(df_trading[df_trading.position_changed == +1].index[0])
     i_tail = df_trading.index.get_loc(df_trading[df_trading.position_changed == -1].index[-1])
-    df_plot = df_trading.iloc[i_head-trading_param.jitter_recovery_feature_param.jump_window:i_tail+trading_param.jitter_recovery_feature_param.jump_window]
+    df_plot = df_trading.iloc[i_head-12*60:i_tail+12*60]
     ax = df_plot[['value']].plot(figsize=(9,2))
     ymin, ymax = df_plot[['value']].min(), df_trading[['value']].max()
     ax.vlines(x=list(df_plot[df_plot.position_changed == +1].index), ymin=ymin, ymax=ymax, color='b', linestyles='dashed', label='enter')
