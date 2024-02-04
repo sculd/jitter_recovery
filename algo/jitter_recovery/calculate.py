@@ -136,7 +136,7 @@ class Status:
                 if self.ch_from_lowest_since_enter > trading_param.exit_jumpt_threshold:
                     self.in_position = 0
             else:
-                if self.ch_from_lowest_since_enter > trading_param.exit_jumpt_threshold \
+                if self.ch_from_lowest_since_enter > trading_param.jump_threshold / 4.0 \
                     and self.timedelta_since_position_enter >= 5:
                     self.in_position = 0
 
