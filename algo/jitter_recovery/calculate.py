@@ -1,5 +1,7 @@
 import pandas as pd, numpy as np
 from collections import defaultdict
+from numba import njit
+
 
 defaultjump_window = 60
 defaultjump_window_longterm = 240
@@ -38,12 +40,13 @@ class JitterRecoveryTradingParam:
             JitterRecoveryFeatureParam.get_default_param_longterm(), default_jump_threshold_longterm, default_drop_from_jump_threshold_longterm, default_exit_jumpt_threshold_longterm, is_long_term = True)
 
 
-def _get_ch(v1, v2):
+@njit
+def _get_ch(v1: float, v2: float) -> float:
     if v1 == 0:
         return 0
     return (v2 - v1) / v1
 
-
+@njit
 def get_changes_1dim(values):
     '''
     values is a 1 dimensional array.
@@ -51,11 +54,17 @@ def get_changes_1dim(values):
     l = values.shape[0]
     if l < 1: return None
 
-    if len(values.shape) == 2:
-        values = [v[0] for v in values]
+    '''
+    if len(values_argg.shape) == 2:
+        values = np.array([v[0] for v in values_argg])
+    else:
+        values = values_argg
+    '''
 
-    ch_max, ch_min = 0, 0
-    distance_max_ch, distance_min_ch = 1, 1
+    ch_max = 0
+    ch_min = 0
+    distance_max_ch = 1
+    distance_min_ch = 1
     ch_since_max, ch_since_min = 0, 0
 
     first_v, last_v = values[0], values[-1]
@@ -105,7 +114,7 @@ def get_changes_1dim(values):
 
 def get_feature_df(dfs, jitter_recovery_feature_param):
     window = jitter_recovery_feature_param.jump_window
-    return pd.DataFrame([get_changes_1dim(df_.values) for df_ in dfs[['close']].rolling(window, min_periods=window)], index=dfs.index)
+    return pd.DataFrame([get_changes_1dim(np.array([v[0] for v in df_.to_numpy(dtype=np.float64)], dtype=np.float64)) for df_ in dfs[['close']].rolling(window, min_periods=window)], index=dfs.index)
 
 
 class Status:
@@ -121,6 +130,23 @@ class Status:
         self.v_ch_max_is_from_when_enter, self.v_ch_min_is_from_when_enter = 0, 0
         self.ch_from_enter = 0
         self.ch_from_lowest_since_enter = 0
+
+    def as_dict(self):
+        return {
+            'in_position': self.in_position,
+            'value_at_enter': self.value_at_enter,
+            'lowest_since_enter': self.lowest_since_enter,
+            'timedelta_since_position_enter': self.timedelta_since_position_enter,
+            'v_ch_max_is_to_when_enter': self.v_ch_max_is_to_when_enter,
+            'v_ch_min_is_to_when_enter': self.v_ch_min_is_to_when_enter,
+            'v_ch_max_is_from_when_enter': self.v_ch_max_is_from_when_enter,
+            'v_ch_min_is_from_when_enter': self.v_ch_min_is_from_when_enter,
+            'ch_from_enter': self.ch_from_enter,
+            'ch_from_lowest_since_enter': self.ch_from_lowest_since_enter,
+        }
+
+    def as_df(self):
+        return pd.DataFrame({k: [v] for k, v in self.as_dict().items()})
 
     def update(self, changes, trading_param):
         value = changes['value']
@@ -174,111 +200,19 @@ class Status:
                 self.reset()
 
 
-def add_trading_columns(df_feature, jitter_recover_trading_param):
-    in_positions = [0]
-    lowest_since_enters = [0]
-    timedelta_since_position_enters = [0]
-    value_at_enters = [0]
-    v_ch_max_is_to_when_enters, v_ch_min_is_to_when_enters = [0], [0]
-    v_ch_max_is_from_when_enters, v_ch_min_is_from_when_enters = [0], [0]
-    ch_from_enters = [0]
-    ch_from_lowest_since_enters = [0]
-    for i in range(1, len(df_feature.index)):
-        in_position = in_positions[-1]
-        value_at_enter = value_at_enters[-1]
-        lowest_since_enter = lowest_since_enters[-1]
-        timedelta_since_position_enter = timedelta_since_position_enters[-1]
-        v_ch_max_is_to_when_enter = v_ch_max_is_to_when_enters[-1]
-        v_ch_min_is_to_when_enter = v_ch_min_is_to_when_enters[-1]
-        v_ch_max_is_from_when_enter = v_ch_max_is_from_when_enters[-1]
-        v_ch_min_is_from_when_enter = v_ch_min_is_from_when_enters[-1]
-        ch_from_enter = ch_from_enters[-1]
-        ch_from_lowest_since_enter = ch_from_lowest_since_enters[-1]
-        # if i_decision = i-1, the position of current is one step delayed to make it more realistic.
-        # on the other hand, it might be too unrealistically strigent condition
-        decision_delay = 0
-        i_decision = i - decision_delay
-        v = df_feature.value.values[i]
-        if in_position == 1:
-            if v < lowest_since_enter:
-                lowest_since_enter = v
-            timedelta_since_position_enter = timedelta_since_position_enters[-1] + 1
-            ch_from_enter =  (v - value_at_enter) / value_at_enter
-            ch_from_lowest_since_enter = (v - lowest_since_enter) / lowest_since_enter
-    
-            if not jitter_recover_trading_param.is_long_term:
-                if ch_from_lowest_since_enter > jitter_recover_trading_param.exit_jumpt_threshold:
-                    in_position = 0
-            else:
-                if ch_from_lowest_since_enter > jitter_recover_trading_param.jump_threshold / 4.0 \
-                    and timedelta_since_position_enter >= 5:
-                    in_position = 0
+def add_trading_columns(df_feature, trading_param):
+    status = Status()
+    trading_dict = defaultdict(list)
 
-                if ch_from_enter > jitter_recover_trading_param.exit_jumpt_threshold:
-                    in_position = 0
+    for i in df_feature.index:
+        changes = df_feature.loc[i].to_dict()
+        status.update(changes, trading_param)
+        for k, v in {**changes, **status.as_dict()}.items():
+            trading_dict[k].append(v)
 
-                if v < (v_ch_max_is_to_when_enter - v_ch_max_is_from_when_enter) / 3.0 + v_ch_max_is_from_when_enter:
-                    in_position = 0
-        else:
-            should_enter_position = False
-            
-            if not jitter_recover_trading_param.is_long_term:
-                should_enter_position = df_feature.ch_max.values[i_decision] > jitter_recover_trading_param.jump_threshold \
-                and df_feature.ch_since_max.values[i_decision] < jitter_recover_trading_param.drop_from_jump_threshold \
-                and df_feature.distance_max_ch.values[i_decision] < 10 \
-                and df_feature.distance_max_ch.values[i_decision] > 2
-            else:
-                should_enter_position = df_feature.ch_max.values[i_decision] > jitter_recover_trading_param.jump_threshold \
-                and df_feature.ch_since_max.values[i_decision] < jitter_recover_trading_param.drop_from_jump_threshold \
-                and df_feature.distance_max_ch.values[i_decision] < 60 \
-                and df_feature.distance_max_ch.values[i_decision] > 2
+    df_feature_trading = pd.DataFrame(trading_dict)
+    df_feature_trading['position_changed'] = df_feature_trading.in_position.diff()
+    df_feature_trading['profit_raw'] = -df_feature_trading.value.diff() * df_feature_trading.in_position.shift()
+    df_feature_trading['profit'] = -df_feature_trading.value.pct_change() * df_feature_trading.in_position.shift()
 
-            if should_enter_position: 
-                in_position = 1
-                value_at_enter = v
-                lowest_since_enter = df_feature.value.values[i]
-                timedelta_since_position_enter = 0
-                v_ch_max_is_to_when_enter = df_feature.v_ch_max_is_to.values[i]
-                v_ch_min_is_to_when_enter = df_feature.v_ch_min_is_to.values[i]
-                v_ch_max_is_from_when_enter = df_feature.v_ch_max_is_from.values[i]
-                v_ch_min_is_from_when_enter = df_feature.v_ch_min_is_from.values[i]
-                ch_from_enter = 0
-                ch_from_lowest_since_enter = 0
-            else:
-                in_position = 0
-                value_at_enter = 0
-                lowest_since_enter = 0
-                timedelta_since_position_enter = 0
-                v_ch_max_is_to_when_enter = 0
-                v_ch_min_is_to_when_enter = 0
-                v_ch_max_is_from_when_enter = 0
-                v_ch_min_is_from_when_enter = 0
-                ch_from_enter = 0
-                ch_from_lowest_since_enter = 0
-    
-        in_positions.append(in_position)
-        value_at_enters.append(value_at_enter)
-        lowest_since_enters.append(lowest_since_enter)
-        timedelta_since_position_enters.append(timedelta_since_position_enter)
-        v_ch_max_is_to_when_enters.append(v_ch_max_is_to_when_enter)
-        v_ch_min_is_to_when_enters.append(v_ch_min_is_to_when_enter)
-        v_ch_max_is_from_when_enters.append(v_ch_max_is_from_when_enter)
-        v_ch_min_is_from_when_enters.append(v_ch_min_is_from_when_enter)
-        ch_from_enters.append(ch_from_enter)
-        ch_from_lowest_since_enters.append(ch_from_lowest_since_enter)
-    
-    df_feature['in_position'] = in_positions
-    df_feature['value_at_enter'] = value_at_enters
-    df_feature['position_changed'] = df_feature.in_position.diff()
-    df_feature['lowest_since_enter'] = lowest_since_enters
-    df_feature['timedelta_since_position_enter'] = timedelta_since_position_enters
-    df_feature['v_ch_max_is_to_when_enter'] = v_ch_max_is_to_when_enters
-    df_feature['v_ch_min_is_to_when_enter'] = v_ch_min_is_to_when_enters
-    df_feature['v_ch_max_is_from_when_enter'] = v_ch_max_is_from_when_enters
-    df_feature['v_ch_min_is_from_when_enter'] = v_ch_min_is_from_when_enters
-    df_feature['ch_from_enter'] = ch_from_enters
-    df_feature['ch_from_lowest_since_enter'] = ch_from_lowest_since_enters
-    df_feature['profit_raw'] = -df_feature.value.diff() * df_feature.in_position.shift()
-    df_feature['profit'] = -df_feature.value.pct_change() * df_feature.in_position.shift()
-
-    return df_feature
+    return df_feature_trading
