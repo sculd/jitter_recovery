@@ -44,12 +44,15 @@ df_okx_20240101_0115 = pd.read_parquet(f'{base_okx}/df_okx_20240101_0115.parquet
 df_okx_20240104_0107 = pd.read_parquet(f'{base_okx}/df_okx_20240104_0107.parquet')
 df_okx_20240116_0131 = pd.read_parquet(f'{base_okx}/df_okx_20240116_0131.parquet')
 df_okx_20240101_0131 = pd.read_parquet(f'{base_okx}/df_okx_20240101_0131.parquet')
+df_okx_20240203_0205 = pd.read_parquet(f'{base_okx}/df_okx_20240203_0205.parquet')
+df_okx_20240204_0206 = pd.read_parquet(f'{base_okx}/df_okx_20240204_0206.parquet')
 df_binance_20240122_0123 = pd.read_parquet(f'{base_binance}/df_binance_20240122_0123.parquet')
 df_binance_20240122_0124 = pd.read_parquet(f'{base_binance}/df_binance_20240122_0124.parquet')
 df_binance_20240125_0130 = pd.read_parquet(f'{base_binance}/df_binance_20240125_0130.parquet')
 df_binance_20240130_0201 = pd.read_parquet(f'{base_binance}/df_binance_20240130_0201.parquet')
 df_binance_20240125_0202 = pd.read_parquet(f'{base_binance}/df_binance_20240125_0202.parquet')
-
+df_binance_20240203_0205 = pd.read_parquet(f'{base_binance}/df_binance_20240203_0205.parquet')
+df_binance_20240204_0206 = pd.read_parquet(f'{base_binance}/df_binance_20240204_0206.parquet')
 
 def get_close_between_datetime(df, sample_period_minutes, symbols, start_datetime_str, end_datetime_str, if_2023=True):
     df_between = df[(df.index >= start_datetime_str) & (df.index < end_datetime_str)][symbols].resample(f'{sample_period_minutes}min').last().dropna()

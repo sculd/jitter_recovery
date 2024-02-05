@@ -8,7 +8,12 @@ def get_dfsts(df, trading_param):
     all_symbols = df.symbol.unique()
     all_symbols = [s for s in all_symbols if 'USDT' in s]
 
-    jump_window_ = int(trading_param.jitter_recovery_feature_param.jump_window / 5)
+    if not trading_param.is_long_term:        
+        initial_run_resolution = 2
+    else:
+        initial_run_resolution = 5
+
+    jump_window_ = int(trading_param.jitter_recovery_feature_param.jump_window / initial_run_resolution)
     dfst_feature = df.set_index(['symbol', 'timestamp'])
     dfst_trading = df.set_index(['symbol', 'timestamp'])
     symbol_with_jumps = []
@@ -16,7 +21,7 @@ def get_dfsts(df, trading_param):
     for i, symbol in enumerate(all_symbols):
         if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
-        dfs_ = dfs.resample('5min').last()
+        dfs_ = dfs.resample(f'{initial_run_resolution}min').last()
         jitter_recovery_trading_param_ = algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(jump_window_)
         
         df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs_, jitter_recovery_trading_param_)
@@ -69,7 +74,10 @@ def investigate_symbol(df, symbol_investigate, trading_param, figsize=None):
 
     i_head = df_trading.index.get_loc(df_trading[df_trading.position_changed == +1].index[0])
     i_tail = df_trading.index.get_loc(df_trading[df_trading.position_changed == -1].index[-1])
-    df_plot = df_trading.iloc[i_head-12*60:i_tail+12*60]
+    if not trading_param.is_long_term:
+        df_plot = df_trading.iloc[i_head-2*60:i_tail+2*60]
+    else:
+        df_plot = df_trading.iloc[i_head-12*60:i_tail+12*60]
     ax = df_plot[['value']].plot(figsize=(9,2))
     ymin, ymax = df_plot[['value']].min(), df_trading[['value']].max()
     ax.vlines(x=list(df_plot[df_plot.position_changed == +1].index), ymin=ymin, ymax=ymax, color='b', linestyles='dashed', label='enter')
