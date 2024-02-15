@@ -16,7 +16,7 @@ def get_dfsts(df, trading_param):
     else:
         initial_run_resolution = 5
 
-    jump_window_ = int(trading_param.jitter_recovery_feature_param.jump_window / initial_run_resolution)
+    window_ = int(trading_param.feature_param.window / initial_run_resolution)
     dfst_feature_approximate = None
     symbol_with_jumps = []
 
@@ -24,7 +24,7 @@ def get_dfsts(df, trading_param):
         if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
         dfs_ = dfs.resample(f'{initial_run_resolution}min').last()
-        jitter_recovery_trading_param_ = algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(jump_window_)
+        jitter_recovery_trading_param_ = algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(window_)
         
         df_feature_ = algo.jitter_recovery.calculate.get_feature_df(dfs_, jitter_recovery_trading_param_)
         del dfs
@@ -51,7 +51,7 @@ def get_dfsts(df, trading_param):
         if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
         
-        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.jitter_recovery_feature_param)
+        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
         del dfs
 
         print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_max >= trading_param.jump_threshold * 0.9])}')
@@ -79,7 +79,7 @@ def get_dfsts_feature(df, trading_param):
     else:
         initial_run_resolution = 5
 
-    jump_window_ = int(trading_param.jitter_recovery_feature_param.jump_window / initial_run_resolution)
+    window_ = int(trading_param.feature_param.window / initial_run_resolution)
     dfst_feature_approximate = None
     symbol_with_jumps = []
 
@@ -87,7 +87,7 @@ def get_dfsts_feature(df, trading_param):
         if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
         dfs_ = dfs.resample(f'{initial_run_resolution}min').last()
-        jitter_recovery_trading_param_ = algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(jump_window_)
+        jitter_recovery_trading_param_ = algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(window_)
         
         df_feature_ = algo.jitter_recovery.calculate.get_feature_df(dfs_, jitter_recovery_trading_param_)
         del dfs
@@ -113,7 +113,7 @@ def get_dfsts_feature(df, trading_param):
         if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
         
-        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.jitter_recovery_feature_param)
+        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
         del dfs
 
         print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_max >= trading_param.jump_threshold * 0.9])}')
@@ -135,7 +135,7 @@ def get_dfst_trading(df, dfst_feature_approximate, trading_param):
     for i, symbol in enumerate(symbol_with_jumps):
         if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
-        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.jitter_recovery_feature_param)
+        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
         del dfs
 
         print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_max >= trading_param.jump_threshold * 0.9])}')
@@ -163,7 +163,7 @@ def investigate_trading(dfst_feature_approximate, dfst_trading):
 def investigate_symbol(df, symbol_investigate, trading_param, figsize=None):
     dfi = df.set_index(['timestamp', 'symbol'])
     dfs = dfi.xs(symbol_investigate, level=1)
-    df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.jitter_recovery_feature_param)
+    df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
     df_trading = add_trading_columns(df_feature, trading_param)
     
     if len(df_trading[df_trading.in_position == 1]) == 0:

@@ -27,7 +27,7 @@ class TradeManager:
         '''
         timestamp_epochs_values is an arrya of (timestamp, value) tuples.
         '''
-        w = self.trading_param.jitter_recover_feature_param.jump_window
+        w = self.trading_param.feature_param.window
         changes = algo.jitter_recovery.calculate.get_changes_1dim(np.array([tv[1] for tv in list(timestamp_epochs_values)[-w:]]))
         in_position_before = self.status_per_symbol[symbol].in_position
         self.status_per_symbol[symbol].update(changes, self.trading_param)

@@ -33,7 +33,7 @@ class JitterRecoveryFeatureParam:
 
 
 trading_param_spec = [
-    ('jitter_recovery_feature_param', numba.typeof(JitterRecoveryFeatureParam(20))),
+    ('feature_param', numba.typeof(JitterRecoveryFeatureParam(20))),
     ('jump_threshold', numba.float64),
     ('drop_from_jump_threshold', numba.float64),
     ('exit_jumpt_threshold', numba.float64),
@@ -41,8 +41,8 @@ trading_param_spec = [
     ]
 
 class JitterRecoveryTradingParam:
-    def __init__(self, jitter_recovery_feature_param, jump_threshold, drop_from_jump_threshold, exit_jumpt_threshold, is_long_term):
-        self.jitter_recovery_feature_param = jitter_recovery_feature_param
+    def __init__(self, feature_param, jump_threshold, drop_from_jump_threshold, exit_jumpt_threshold, is_long_term):
+        self.feature_param = feature_param
         self.jump_threshold= jump_threshold
         self.drop_from_jump_threshold = drop_from_jump_threshold
         self.exit_jumpt_threshold = exit_jumpt_threshold
@@ -135,8 +135,8 @@ def get_changes_1dim(values):
         }
 
 
-def get_feature_df(dfs, jitter_recovery_feature_param):
-    window = jitter_recovery_feature_param.window
+def get_feature_df(dfs, feature_param):
+    window = feature_param.window
     return pd.DataFrame([get_changes_1dim(np.array([v[0] for v in df_.to_numpy(dtype=np.float64)], dtype=np.float64)) for df_ in dfs[['close']].rolling(window, min_periods=window)], index=dfs.index)
 
 class Status:
