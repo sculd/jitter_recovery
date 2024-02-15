@@ -32,11 +32,13 @@ date_str_20230930 = "2023-09-30"
 base_okx = 'data/okx'
 base_binance = 'data/binance'
 # the aggregation bug was fixed from the data below.
+df_okx_20240103_0104 = pd.read_parquet(f'{base_okx}/df_okx_20240103_0104.parquet')
 df_okx_20240106_0109 = pd.read_parquet(f'{base_okx}/df_okx_20240106_0109.parquet')
 df_okx_20240101_0109 = pd.read_parquet(f'{base_okx}/df_okx_20240101_0109.parquet')
 df_okx_20231201_1215 = pd.read_parquet(f'{base_okx}/df_okx_20231201_1215.parquet')
 df_okx_20231216_1231 = pd.read_parquet(f'{base_okx}/df_okx_20231216_1231.parquet')
 df_okx_20231201_1231 = pd.read_parquet(f'{base_okx}/df_okx_20231201_1231.parquet')
+df_okx_20231226_1227 = pd.read_parquet(f'{base_okx}/df_okx_20231226_1227.parquet')
 df_okx_20240109_0110 = pd.read_parquet(f'{base_okx}/df_okx_20240109_0110.parquet')
 df_okx_20240110_0113 = pd.read_parquet(f'{base_okx}/df_okx_20240110_0113.parquet')
 df_okx_20240115_0117 = pd.read_parquet(f'{base_okx}/df_okx_20240115_0117.parquet')
