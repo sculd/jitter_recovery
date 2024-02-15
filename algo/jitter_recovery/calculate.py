@@ -1,27 +1,44 @@
 import pandas as pd, numpy as np
 from collections import defaultdict
+import numba
 from numba import njit
+from numba.experimental import jitclass
 
 
-defaultjump_window = 60
-defaultjump_window_longterm = 240
+default_window = 60
+default_window_longterm = 240
 
 default_jump_threshold, default_drop_from_jump_threshold, default_exit_jumpt_threshold = 0.20, -0.04, 0.02
 default_jump_threshold_longterm, default_drop_from_jump_threshold_longterm, default_exit_jumpt_threshold_longterm = 0.40, -0.10, 0.05
 
 
-class JitterRecoveryFeatureParam:
-    def __init__(self, jump_window):
-        self.jump_window = jump_window
+feature_param_spec = [
+    ('window', numba.int32),
+    ]
 
+@jitclass(spec=feature_param_spec)
+class JitterRecoveryFeatureParam:
+    def __init__(self, window):
+        self.window = window
+
+    @staticmethod
     def get_default_param():
         return JitterRecoveryFeatureParam(
-            defaultjump_window)
+            default_window)
 
+    @staticmethod
     def get_default_param_longterm():
         return JitterRecoveryFeatureParam(
-            defaultjump_window_longterm)
+            default_window_longterm)
 
+
+trading_param_spec = [
+    ('jitter_recovery_feature_param', numba.typeof(JitterRecoveryFeatureParam(20))),
+    ('jump_threshold', numba.float64),
+    ('drop_from_jump_threshold', numba.float64),
+    ('exit_jumpt_threshold', numba.float64),
+    ('is_long_term', numba.boolean),
+    ]
 
 class JitterRecoveryTradingParam:
     def __init__(self, jitter_recovery_feature_param, jump_threshold, drop_from_jump_threshold, exit_jumpt_threshold, is_long_term):
@@ -31,14 +48,18 @@ class JitterRecoveryTradingParam:
         self.exit_jumpt_threshold = exit_jumpt_threshold
         self.is_long_term = is_long_term
 
+    @staticmethod
     def get_default_param():
         return JitterRecoveryTradingParam(
             JitterRecoveryFeatureParam.get_default_param(), default_jump_threshold, default_drop_from_jump_threshold, default_exit_jumpt_threshold, is_long_term = False)
 
+    @staticmethod
     def get_default_param_longterm():
         return JitterRecoveryTradingParam(
             JitterRecoveryFeatureParam.get_default_param_longterm(), default_jump_threshold_longterm, default_drop_from_jump_threshold_longterm, default_exit_jumpt_threshold_longterm, is_long_term = True)
 
+    def __str__(self):
+        return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
 
 @njit
 def _get_ch(v1: float, v2: float) -> float:
@@ -93,6 +114,7 @@ def get_changes_1dim(values):
             v_ch_max_is_to = v
             avg_v_before_max_ch = avg_v
 
+
         if ch_min >= ch_drop:
             distance_min_ch, ch_since_min, ch_min = d, ch_since, ch_drop
             v_ch_min_is_from = max_v
@@ -102,6 +124,7 @@ def get_changes_1dim(values):
 
     return {
         'value': values[-1],
+        'ch': _get_ch(values[0], values[-1]),
         'ch_max': ch_max, 'ch_min': ch_min,
         'avg_v_before_max_ch': avg_v_before_max_ch,
         'avg_v_before_min_ch': avg_v_before_min_ch,
@@ -113,9 +136,8 @@ def get_changes_1dim(values):
 
 
 def get_feature_df(dfs, jitter_recovery_feature_param):
-    window = jitter_recovery_feature_param.jump_window
+    window = jitter_recovery_feature_param.window
     return pd.DataFrame([get_changes_1dim(np.array([v[0] for v in df_.to_numpy(dtype=np.float64)], dtype=np.float64)) for df_ in dfs[['close']].rolling(window, min_periods=window)], index=dfs.index)
-
 
 class Status:
     def __init__(self):
@@ -131,32 +153,18 @@ class Status:
         self.ch_from_enter = 0
         self.ch_from_lowest_since_enter = 0
 
-    def as_dict(self):
-        return {
-            'in_position': self.in_position,
-            'value_at_enter': self.value_at_enter,
-            'lowest_since_enter': self.lowest_since_enter,
-            'timedelta_since_position_enter': self.timedelta_since_position_enter,
-            'v_ch_max_is_to_when_enter': self.v_ch_max_is_to_when_enter,
-            'v_ch_min_is_to_when_enter': self.v_ch_min_is_to_when_enter,
-            'v_ch_max_is_from_when_enter': self.v_ch_max_is_from_when_enter,
-            'v_ch_min_is_from_when_enter': self.v_ch_min_is_from_when_enter,
-            'ch_from_enter': self.ch_from_enter,
-            'ch_from_lowest_since_enter': self.ch_from_lowest_since_enter,
-        }
+    def __str__(self):    
+        return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
 
-    def as_df(self):
-        return pd.DataFrame({k: [v] for k, v in self.as_dict().items()})
-
-    def update(self, changes, trading_param):
-        value = changes['value']
+    def update(self, features, trading_param: JitterRecoveryTradingParam) -> None:
+        value = features['value']
         if self.in_position == 1:
             if value < self.lowest_since_enter:
                 self.lowest_since_enter = value
 
             self.timedelta_since_position_enter += 1
-            self.ch_from_enter =  (value - self.value_at_enter) / self.value_at_enter
-            self.ch_from_lowest_since_enter = (value - self.lowest_since_enter) / self.lowest_since_enter
+            self.ch_from_enter = _get_ch(self.value_at_enter, value)
+            self.ch_from_lowest_since_enter = _get_ch(self.lowest_since_enter, value)
 
             if not trading_param.is_long_term:
                 if self.ch_from_lowest_since_enter > trading_param.exit_jumpt_threshold:
@@ -175,44 +183,49 @@ class Status:
             should_enter_position = False
 
             if not trading_param.is_long_term:
-                should_enter_position = changes['ch_max'] > trading_param.jump_threshold \
-                and changes['ch_since_max'] < trading_param.drop_from_jump_threshold \
-                and changes['distance_max_ch'] < 10 \
-                and changes['distance_max_ch'] > 2
+                should_enter_position = features['ch_max'] > trading_param.jump_threshold \
+                and features['ch_since_max'] < trading_param.drop_from_jump_threshold \
+                and features['distance_max_ch'] < 10 \
+                and features['distance_max_ch'] > 2
+
+                #should_enter_position = should_enter_position and features['ch_max_collective'] > 0.05
+
             else:
-                should_enter_position = changes['ch_max'] > trading_param.jump_threshold \
-                and changes['ch_since_max'] < trading_param.drop_from_jump_threshold \
-                and changes['distance_max_ch'] < 60 \
-                and changes['distance_max_ch'] > 2
+                should_enter_position = features['ch_max'] > trading_param.jump_threshold \
+                and features['ch_since_max'] < trading_param.drop_from_jump_threshold \
+                and features['distance_max_ch'] < 60 \
+                and features['distance_max_ch'] > 2
 
             if should_enter_position:
                 self.in_position = 1
                 self.value_at_enter = value
                 self.lowest_since_enter = value
                 self.timedelta_since_position_enter = 0
-                self.v_ch_max_is_to_when_enter = changes['v_ch_max_is_to']
-                self.v_ch_min_is_to_when_enter = changes['v_ch_min_is_to']
-                self.v_ch_max_is_from_when_enter = changes['v_ch_max_is_from']
-                self.v_ch_min_is_from_when_enter = changes['v_ch_min_is_from']
+                self.v_ch_max_is_to_when_enter = features['v_ch_max_is_to']
+                self.v_ch_min_is_to_when_enter = features['v_ch_min_is_to']
+                self.v_ch_max_is_from_when_enter = features['v_ch_max_is_from']
+                self.v_ch_min_is_from_when_enter = features['v_ch_min_is_from']
                 self.ch_from_enter = 0
                 self.ch_from_lowest_since_enter = 0
             else:
                 self.reset()
 
 
-def add_trading_columns(df_feature, trading_param):
-    status = Status()
-    trading_dict = defaultdict(list)
 
-    for i in df_feature.index:
-        changes = df_feature.loc[i].to_dict()
-        status.update(changes, trading_param)
-        for k, v in {**changes, **status.as_dict()}.items():
-            trading_dict[k].append(v)
+def status_as_dict(status):
+    return {
+        'in_position': status.in_position,
+        'value_at_enter': status.value_at_enter,
+        'lowest_since_enter': status.lowest_since_enter,
+        'timedelta_since_position_enter': status.timedelta_since_position_enter,
+        'v_ch_max_is_to_when_enter': status.v_ch_max_is_to_when_enter,
+        'v_ch_min_is_to_when_enter': status.v_ch_min_is_to_when_enter,
+        'v_ch_max_is_from_when_enter': status.v_ch_max_is_from_when_enter,
+        'v_ch_min_is_from_when_enter': status.v_ch_min_is_from_when_enter,
+        'ch_from_enter': status.ch_from_enter,
+        'ch_from_lowest_since_enter': status.ch_from_lowest_since_enter,
+    }
 
-    df_feature_trading = pd.DataFrame(trading_dict)
-    df_feature_trading['position_changed'] = df_feature_trading.in_position.diff()
-    df_feature_trading['profit_raw'] = -df_feature_trading.value.diff() * df_feature_trading.in_position.shift()
-    df_feature_trading['profit'] = -df_feature_trading.value.pct_change() * df_feature_trading.in_position.shift()
 
-    return df_feature_trading
+def status_as_df(status):
+    return pd.DataFrame({k: [v] for k, v in status_as_dict(status).items()})
