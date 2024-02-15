@@ -25,7 +25,7 @@ publish.telegram.post_message(f"starting a new binance longterm live at {datetim
 trade_execution = trading.execution_binance.TradeExecution(target_betsize=50, leverage=5)
 trading_manager = trading.trade.TradeManager(is_long_term=True, trade_execution=trade_execution)
 logging.info("starting a binance longterm")
-price_cache_longterm = trading.price_binance.PriceCache(trading_manager, trading_manager.trading_param.jitter_recover_feature_param.jump_window)
+price_cache_longterm = trading.price_binance.PriceCache(trading_manager, trading_manager.trading_param.jitter_recovery_feature_param.window)
 
 while True:
     trading_manager.trade_execution.print()
