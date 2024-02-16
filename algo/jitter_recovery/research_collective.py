@@ -14,63 +14,37 @@ def get_dfsts(df, trading_param):
     all_symbols = df.symbol.unique()
     all_symbols = [s for s in all_symbols if 'USDT' in s]
       
-    initial_run_resolution = 4
-
-    window_ = int(trading_param.feature_param.window / initial_run_resolution)
-    dfst_feature_approximate = None
-    symbol_with_drops = []
-
-    for i, symbol in enumerate(all_symbols):
-        if 'USDT' not in symbol: continue
-        dfs = dfi.xs(symbol, level=1)
-        dfs_ = dfs.resample(f'{initial_run_resolution}min').last()
-        feature_param_ = algo.jitter_recovery.calculate_collective.CollectiveRecoveryFeatureParam(window_)
-        
-        df_feature_ = algo.jitter_recovery.calculate.get_feature_df(dfs_, feature_param_)
-        del dfs
-        del dfs_
-        
-        print(f'{i} symbol: {symbol}: {len(df_feature_[df_feature_.ch_min <= trading_param.drop_threshold * 0.9])} (approx)')
-        if len(df_feature_[df_feature_.ch_min <= trading_param.drop_threshold * 0.9]) > 0:
-            symbol_with_drops.append(symbol)
-        
-        df_feature_['symbol'] = symbol
-        if dfst_feature_approximate is None:
-            dfst_feature_approximate = df_feature_.copy()
-        else:
-            dfst_feature_approximate = pd.concat([dfst_feature_approximate, df_feature_])
-
-        del df_feature_
-
-    dfst_feature_approximate = dfst_feature_approximate.reset_index().set_index(['symbol', 'timestamp'])
-    df_collective_feature_approxiamate = dfst_feature_approximate.dropna().groupby('timestamp')[collective_feature_columns_no_rolling].median().resample('1min').asfreq().ffill()
-    df_collective_feature_approxiamate['ch_window30_min'] = df_collective_feature_approxiamate.ch.rolling(window=60).min() 
-
-    print(f'symbol_with_drops: {len((symbol_with_drops))}')
-
     dfst_feature = df.set_index(['symbol', 'timestamp'])
-    dfst_trading = df.set_index(['symbol', 'timestamp'])
-    for i, symbol in enumerate(symbol_with_drops):
+    for i, symbol in enumerate(all_symbols):
         if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
         
         df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
         del dfs
-
-        print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_min <= trading_param.drop_threshold * 0.9])}')
-        df_trading = add_trading_columns(df_feature, df_collective_feature_approxiamate, trading_param)
+        
+        print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_min <= trading_param.drop_threshold * 0.9])} (feature)')
         
         for column in df_feature.columns:
             dfst_feature.loc[symbol, column] = df_feature[column].values
+        del df_feature
 
+    df_collective_feature = dfst_feature.dropna().groupby('timestamp')[collective_feature_columns_no_rolling].median().resample('1min').asfreq().ffill()
+    df_collective_feature['ch_window30_min'] = df_collective_feature.ch.rolling(window=60).min() 
+
+    dfst_trading = df.set_index(['symbol', 'timestamp'])
+    for i, symbol in enumerate(all_symbols):
+        if 'USDT' not in symbol: continue
+        
+        df_feature = dfst_feature.xs(symbol, level=0)
+
+        print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_min <= trading_param.drop_threshold * 0.9])} (trading)')
+        df_trading = add_trading_columns(df_feature, df_collective_feature, trading_param)
+        
         for column in df_trading.columns:
             dfst_trading.loc[symbol, column] = df_trading[column].values
-
-        del df_feature
         del df_trading
 
-    return dfst_feature_approximate, dfst_feature, dfst_trading
-
+    return dfst_feature, dfst_trading
 
 
 def add_trading_columns(df_feature, df_collective_feature_approxiamate, trading_param):
