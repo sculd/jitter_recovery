@@ -3,7 +3,7 @@ from collections import defaultdict
 from algo.jitter_recovery.calculate import Status as BasicStatus
 
 
-default_window = 60
+default_window = 40
 
 default_drop_threshold, default_jump_from_drop_threshold, default_exit_drop_threshold = -0.15, +0.04, -0.02
 
