@@ -29,7 +29,7 @@ def get_dfsts(df, trading_param):
         del df_feature
 
     df_collective_feature = dfst_feature.dropna().groupby('timestamp')[collective_feature_columns_no_rolling].median().resample('1min').asfreq().ffill()
-    df_collective_feature['ch_window30_min'] = df_collective_feature.ch.rolling(window=60).min() 
+    df_collective_feature['ch_window30_min'] = df_collective_feature.ch.rolling(window=30).min() 
 
     dfst_trading = df.set_index(['symbol', 'timestamp'])
     for i, symbol in enumerate(all_symbols):
@@ -47,14 +47,14 @@ def get_dfsts(df, trading_param):
     return dfst_feature, dfst_trading
 
 
-def add_trading_columns(df_feature, df_collective_feature_approxiamate, trading_param):
+def add_trading_columns(df_feature, df_collective_feature, trading_param):
     status = algo.jitter_recovery.calculate_collective.Status()
     trading_dict = defaultdict(list)
 
     for i in df_feature.index:
         features = df_feature.loc[i].to_dict()
-        if i in df_collective_feature_approxiamate.index:
-            collective_featuers = df_collective_feature_approxiamate.loc[i].to_dict()
+        if i in df_collective_feature.index:
+            collective_featuers = df_collective_feature.loc[i].to_dict()
         else:
             collective_featuers = {c: 0.0 for c in collective_feature_columns}
         all_features = {**features, **collective_featuers}
@@ -69,4 +69,51 @@ def add_trading_columns(df_feature, df_collective_feature_approxiamate, trading_
 
     return df_feature_trading
 
+def investigate_symbol(df, df_collective_feature, symbol_investigate, trading_param, figsize=None):
+    dfi = df.set_index(['timestamp', 'symbol'])
+    dfs = dfi.xs(symbol_investigate, level=1)
+    df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
+    df_trading = add_trading_columns(df_feature, df_collective_feature, trading_param)
+    
+    if len(df_trading[df_trading.in_position == 1]) == 0:
+        print(f'no trading happens')
+        return df_feature, df_trading
+        
+    figsize = figsize if figsize else (6, 9)
+    fig, (ax_close, ax_collective, ax_profit, ax_chs, ax_in_position, ax_profit_in_position) = plt.subplots(6, figsize=figsize)
+    ax_close.plot(dfs[['close']])
+    ax_collective.plot(df_collective_feature[['ch', 'ch_window30_min']])
+    ax_profit.plot(df_trading[['profit']].cumsum())
+    ax_chs.plot(df_trading[['ch_min', 'ch_since_min']])
+    ax_in_position.plot(df_trading[['in_position']])
+    ax_profit_in_position.plot(df_trading[(df_trading.in_position.shift() != 0)][['profit']].cumsum())
 
+
+    i_head = df_trading.index.get_loc(df_trading[df_trading.position_changed == +1].index[0])
+    i_tail = df_trading.index.get_loc(df_trading[df_trading.position_changed == -1].index[-1])
+    df_plot = df_trading.iloc[i_head-10:i_tail+10]
+    ax = df_plot[['value']].plot(figsize=(9,2))
+    ymin, ymax = df_plot[['value']].min(), df_trading[['value']].max()
+    ax.vlines(x=list(df_plot[df_plot.position_changed == +1].index), ymin=ymin, ymax=ymax, color='b', linestyles='dashed', label='enter')
+    ax.vlines(x=list(df_plot[df_plot.position_changed == -1].index), ymin=ymin, ymax=ymax, color='r', linestyles='dashed', label='enter')
+    plt.show()
+
+    i_head = df_trading.index.get_loc(df_trading[df_trading.position_changed == +1].index[0])
+    i_tail = df_trading.index.get_loc(df_trading[df_trading.position_changed == -1].index[-1])
+    df_plot = df_trading.iloc[i_head-12*60:i_tail+12*60]
+    ax = df_plot[['value']].plot(figsize=(9,2))
+    ymin, ymax = df_plot[['value']].min(), df_trading[['value']].max()
+    ax.vlines(x=list(df_plot[df_plot.position_changed == +1].index), ymin=ymin, ymax=ymax, color='b', linestyles='dashed', label='enter')
+    ax.vlines(x=list(df_plot[df_plot.position_changed == -1].index), ymin=ymin, ymax=ymax, color='r', linestyles='dashed', label='enter')
+    plt.show()    
+
+    ix_head = df_trading[df_trading.position_changed == +1].index[0]
+    ix_tail = df_trading[df_trading.position_changed == -1].index[-1]
+    df_plot = df_collective_feature[['ch', 'ch_window30_min']].loc[ix_head:ix_tail]
+    ax = df_plot.plot(figsize=(9,2))
+    ymin, ymax = df_plot[['ch']].min(), df_trading[['ch']].max()
+    ax.vlines(x=list(df_trading[df_trading.position_changed == +1].index), ymin=ymin, ymax=ymax, color='b', linestyles='dashed', label='enter')
+    ax.vlines(x=list(df_trading[df_trading.position_changed == -1].index), ymin=ymin, ymax=ymax, color='r', linestyles='dashed', label='enter')
+    plt.show()    
+
+    return df_feature, df_trading

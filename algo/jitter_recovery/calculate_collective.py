@@ -79,7 +79,7 @@ class Status(BasicStatus):
             should_enter_position = collective_features['ch_window30_min'] < -0.10 \
                 and features['ch_min'] < trading_param.drop_threshold \
                 and features['ch_since_min'] > trading_param.jump_from_drop_threshold \
-                and features['distance_min_ch'] < 60 \
+                and features['distance_min_ch'] < 20 \
                 and features['distance_min_ch'] > 2
 
             if should_enter_position:

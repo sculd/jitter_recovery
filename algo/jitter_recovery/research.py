@@ -69,6 +69,25 @@ def get_dfsts(df, trading_param):
     return dfst_feature_approximate, dfst_feature, dfst_trading
 
 
+def add_trading_columns(df_feature, trading_param):
+    status = algo.jitter_recovery.calculate.Status()
+    trading_dict = defaultdict(list)
+
+    for i in df_feature.index:
+        features = df_feature.loc[i].to_dict()
+        all_features = features
+        status.update(all_features, trading_param)
+        for k, v in {**all_features, **algo.jitter_recovery.calculate.status_as_dict(status)}.items():
+            trading_dict[k].append(v)
+
+    df_feature_trading = pd.DataFrame(trading_dict, index=df_feature.index)
+    df_feature_trading['position_changed'] = df_feature_trading.in_position.diff()
+    df_feature_trading['profit_raw'] = -df_feature_trading.value.diff() * df_feature_trading.in_position.shift()
+    df_feature_trading['profit'] = -df_feature_trading.value.pct_change() * df_feature_trading.in_position.shift()
+
+    return df_feature_trading
+
+
 def investigate_trading(dfst_feature_approximate, dfst_trading):
     fig, ax_profit = plt.subplots(1, figsize=(16,2))
     ax_profit.plot(dfst_trading[['profit']].groupby('timestamp').sum().cumsum())
@@ -120,22 +139,3 @@ def investigate_symbol(df, symbol_investigate, trading_param, figsize=None):
     plt.show()    
 
     return df_feature, df_trading
-
-
-def add_trading_columns(df_feature, trading_param):
-    status = algo.jitter_recovery.calculate.Status()
-    trading_dict = defaultdict(list)
-
-    for i in df_feature.index:
-        features = df_feature.loc[i].to_dict()
-        all_features = features
-        status.update(all_features, trading_param)
-        for k, v in {**all_features, **algo.jitter_recovery.calculate.status_as_dict(status)}.items():
-            trading_dict[k].append(v)
-
-    df_feature_trading = pd.DataFrame(trading_dict, index=df_feature.index)
-    df_feature_trading['position_changed'] = df_feature_trading.in_position.diff()
-    df_feature_trading['profit_raw'] = -df_feature_trading.value.diff() * df_feature_trading.in_position.shift()
-    df_feature_trading['profit'] = -df_feature_trading.value.pct_change() * df_feature_trading.in_position.shift()
-
-    return df_feature_trading
