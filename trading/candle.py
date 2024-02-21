@@ -5,8 +5,8 @@ import logging
 
 
 class CandleCache:
-    def __init__(self, trading_manager, windows_minutes):
-        self.trading_manager = trading_manager
+    def __init__(self, trading_managers, windows_minutes):
+        self.trading_managers = trading_managers
         self.symbol_serieses = defaultdict(deque)
         self.windows_minutes = windows_minutes
 
@@ -46,5 +46,6 @@ class CandleCache:
             self.symbol_serieses[symbol].popleft()
 
         if insert_new_minute:
-            self.trading_manager.on_new_minutes(symbol, timestamp_epoch_seconds, self.symbol_serieses[symbol])
+            for trading_manager in self.trading_manager:
+                trading_manager.on_new_minutes(symbol, timestamp_epoch_seconds, self.symbol_serieses[symbol])
             self.symbol_serieses[symbol].append((timestamp_epoch_seconds, close_))

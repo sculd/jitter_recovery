@@ -50,8 +50,9 @@ def _message_to_bwt_dicts(symbol, data):
 _msg_cnt = 0
 
 class PriceCache:
-    def __init__(self, trading_manager, windows_minutes):
-        self.candle_cache = trading.candle.CandleCache(trading_manager, windows_minutes=windows_minutes)
+    def __init__(self, trading_managers):
+        window = max([trading_manager.trading_param.feature_param.window for trading_manager in trading_managers])
+        self.candle_cache = trading.candle.CandleCache(trading_managers, windows_minutes=window)
 
         self.ws_connect()
 

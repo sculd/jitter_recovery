@@ -5,7 +5,13 @@ from algo.jitter_recovery.calculate import Status as BasicStatus
 
 default_window = 40
 
+default_collective_drop_threshold = -0.10
+default_collective_drop_lower_threshold = -0.40
 default_drop_threshold, default_jump_from_drop_threshold, default_exit_drop_threshold = -0.15, +0.04, -0.02
+
+default_collective_small_drop_threshold = -0.03
+default_collective_small_drop_lower_threshold = -0.05
+default_small_drop_threshold, default_jump_from_small_drop_threshold, default_exit_small_drop_threshold = -0.03, +0.005, -0.01
 
 
 class CollectiveRecoveryFeatureParam:
@@ -22,8 +28,10 @@ class CollectiveRecoveryFeatureParam:
 
 
 class CollectiveRecoveryTradingParam:
-    def __init__(self, feature_param, drop_threshold, jump_from_drop_threshold, exit_drop_threshold):
+    def __init__(self, feature_param, collective_drop_threshold, collective_drop_lower_threshold, drop_threshold, jump_from_drop_threshold, exit_drop_threshold):
         self.feature_param = feature_param
+        self.collective_drop_threshold = collective_drop_threshold
+        self.collective_drop_lower_threshold = collective_drop_lower_threshold
         self.drop_threshold = drop_threshold
         self.jump_from_drop_threshold = jump_from_drop_threshold
         self.exit_drop_threshold = exit_drop_threshold
@@ -31,7 +39,24 @@ class CollectiveRecoveryTradingParam:
     @staticmethod
     def get_default_param():
         return CollectiveRecoveryTradingParam(
-            CollectiveRecoveryFeatureParam.get_default_param(), default_drop_threshold, default_jump_from_drop_threshold, default_exit_drop_threshold)
+            CollectiveRecoveryFeatureParam.get_default_param(), 
+            collective_drop_threshold = default_collective_drop_threshold,
+            collective_drop_lower_threshold = default_collective_drop_lower_threshold,
+            drop_threshold = default_drop_threshold,
+            jump_from_drop_threshold = default_jump_from_drop_threshold,
+            exit_drop_threshold  = default_exit_drop_threshold,
+            )
+
+    @staticmethod
+    def get_default_param_small_drop():
+        return CollectiveRecoveryTradingParam(
+            CollectiveRecoveryFeatureParam.get_default_param(), 
+            collective_drop_threshold = default_collective_small_drop_threshold,
+            collective_drop_lower_threshold = default_collective_small_drop_lower_threshold,
+            drop_threshold = default_small_drop_threshold,
+            jump_from_drop_threshold = default_jump_from_small_drop_threshold,
+            exit_drop_threshold  = default_exit_small_drop_threshold,
+            )
 
     def __str__(self):
         return ', '.join([f'{k}: {str(v)}' for k, v in vars(self).items()])
@@ -76,7 +101,8 @@ class Status(BasicStatus):
         else:
             should_enter_position = False
 
-            should_enter_position = collective_features['ch_window30_min'] < -0.10 \
+            should_enter_position = collective_features['ch_window30_min'] < trading_param.collective_drop_threshold \
+                and collective_features['ch_window30_min'] > trading_param.collective_drop_lower_threshold \
                 and features['ch_min'] < trading_param.drop_threshold \
                 and features['ch_since_min'] > trading_param.jump_from_drop_threshold \
                 and features['distance_min_ch'] < 20 \

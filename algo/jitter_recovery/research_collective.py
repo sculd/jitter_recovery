@@ -28,8 +28,18 @@ def get_dfsts(df, trading_param):
             dfst_feature.loc[symbol, column] = df_feature[column].values
         del df_feature
 
+    dfst_trading = get_dfst_trading(df, dfst_feature, trading_param)
+
+    return dfst_feature, dfst_trading
+
+
+def get_dfst_trading(df, dfst_feature, trading_param):
+    all_symbols = dfst_feature.index.get_level_values('symbol').unique()
+    all_symbols = [s for s in all_symbols if 'USDT' in s]
+      
     df_collective_feature = dfst_feature.dropna().groupby('timestamp')[collective_feature_columns_no_rolling].median().resample('1min').asfreq().ffill()
     df_collective_feature['ch_window30_min'] = df_collective_feature.ch.rolling(window=30).min() 
+    df_collective_feature['ch_min_window30_min'] = df_collective_feature.ch_min.rolling(window=30).min() 
 
     dfst_trading = df.set_index(['symbol', 'timestamp'])
     for i, symbol in enumerate(all_symbols):
@@ -43,8 +53,10 @@ def get_dfsts(df, trading_param):
         for column in df_trading.columns:
             dfst_trading.loc[symbol, column] = df_trading[column].values
         del df_trading
+    
+    del df_collective_feature
 
-    return dfst_feature, dfst_trading
+    return dfst_trading
 
 
 def add_trading_columns(df_feature, df_collective_feature, trading_param):
@@ -57,10 +69,12 @@ def add_trading_columns(df_feature, df_collective_feature, trading_param):
             collective_featuers = df_collective_feature.loc[i].to_dict()
         else:
             collective_featuers = {c: 0.0 for c in collective_feature_columns}
-        all_features = {**features, **collective_featuers}
         status.update(collective_featuers, features, trading_param)
-        for k, v in {**all_features, **algo.jitter_recovery.calculate.status_as_dict(status)}.items():
+
+        for k, v in {**features, **algo.jitter_recovery.calculate.status_as_dict(status)}.items():
             trading_dict[k].append(v)
+        for k, v in collective_featuers.items():
+            trading_dict[f'{k}_collective'].append(v)
 
     df_feature_trading = pd.DataFrame(trading_dict, index=df_feature.index)
     df_feature_trading['position_changed'] = df_feature_trading.in_position.diff()

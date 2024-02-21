@@ -24,10 +24,13 @@ publish.telegram.post_message(f"starting a new binance live at {datetime.datetim
 
 trade_execution = trading.execution_binance.TradeExecution(target_betsize=50, leverage=5)
 trading_manager = trading.trade.TradeManager(is_long_term=False, trade_execution=trade_execution)
-logging.info("starting a binance shortterm")
-price_cache = trading.price_binance.PriceCache(trading_manager, trading_manager.trading_param.feature_param.window)
+trading_manager_long_term = trading.trade.TradeManager(is_long_term=True, trade_execution=trade_execution)
+
+logging.info("starting a binance short/long term")
+price_cache = trading.price_binance.PriceCache([trading_manager, trading_manager_long_term])
 
 while True:
     trading_manager.trade_execution.print()
+    trading_manager_long_term.trade_execution.print()
     time.sleep(60 * 60)
 

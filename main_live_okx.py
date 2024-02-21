@@ -24,13 +24,9 @@ publish.telegram.post_message(f"starting a okx new live at {datetime.datetime.no
 
 trade_execution = trading.execution_okx.TradeExecution(target_betsize=200, leverage=5)
 trading_manager = trading.trade.TradeManager(is_long_term=False, trade_execution=trade_execution)
-logging.info("starting a okx shortterm")
-price_cache = trading.price_okx.PriceCache(trading_manager, trading_manager.trading_param.feature_param.window)
-
-time.sleep(5)
 trading_manager_longterm = trading.trade.TradeManager(is_long_term=True, trade_execution=trade_execution)
-logging.info("starting a okx longterm")
-price_cache_longterm = trading.price_okx.PriceCache(trading_manager_longterm, trading_manager_longterm.trading_param.feature_param.window)
+logging.info("starting a okx short/long term")
+price_cache = trading.price_okx.PriceCache([trading_manager, trading_manager_longterm])
 
 while True:
     trading_manager.trade_execution.print()

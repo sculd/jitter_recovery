@@ -17,10 +17,21 @@ import trading.trade_collective
 is_long_term=True
 
 #trading_manager = trading.trade.TradeManager(is_long_term=is_long_term)
-trading_manager = trading.trade_collective.TradeManager()
+
+import algo.jitter_recovery.calculate_collective
+feature_param = algo.jitter_recovery.calculate_collective.CollectiveRecoveryFeatureParam(40)
+trading_param = algo.jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam(
+    feature_param, 
+    collective_drop_threshold = -0.03,
+    collective_drop_lower_threshold = -0.05,
+    drop_threshold = -0.03,
+    jump_from_drop_threshold = +0.005,
+    exit_drop_threshold  = -0.01,
+    )
+trading_manager = trading.trade_collective.TradeManager(trading_param=trading_param)
 
 
-filename = "data/okx/csv_okx_20240103_0104.csv"
+filename = "data/okx/csv_okx_20240101_0115.csv"
 price_cache = trading.prices_csv.BacktestCsvPriceCache(trading_manager, filename, trading_manager.trading_param.feature_param.window)
 
 
