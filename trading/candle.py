@@ -46,6 +46,6 @@ class CandleCache:
             self.symbol_serieses[symbol].popleft()
 
         if insert_new_minute:
-            for trading_manager in self.trading_manager:
+            for trading_manager in self.trading_managers:
                 trading_manager.on_new_minutes(symbol, timestamp_epoch_seconds, self.symbol_serieses[symbol])
             self.symbol_serieses[symbol].append((timestamp_epoch_seconds, close_))
