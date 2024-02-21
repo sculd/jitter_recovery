@@ -28,7 +28,7 @@ class TradeManager:
         if len(self.ch_per_symbol) == 0: return
 
         ch = np.mean(list(self.ch_per_symbol.values()))
-        ch_min = np.mean(list(self.collective_ch_mins.values()))
+        ch_min = np.mean(list(self.ch_min_per_symbol.values()))
         timestamp_epoch_seconds = int(timestamp_epoch_seconds / 60) * 60
         recent_timestamp_epoch_seconds = self.collective_chs[-1][0] if len(self.collective_chs) > 0 else 0
         if timestamp_epoch_seconds == recent_timestamp_epoch_seconds:
