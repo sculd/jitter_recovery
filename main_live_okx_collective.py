@@ -28,7 +28,7 @@ trading_param = algo.jitter_recovery.calculate_collective.CollectiveRecoveryTrad
 trading_manager = trading.trade_collective.TradeManager(trade_execution=trade_execution, trading_param=trading_param)
 
 trade_execution_small_drop = trading.execution_okx.TradeExecution(target_betsize=200, leverage=5)
-trading_param_small_drop = algo.jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam.get_default_param_small_dro()
+trading_param_small_drop = algo.jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam.get_default_param_small_drop()
 trading_manager_small_drop = trading.trade_collective.TradeManager(trade_execution=trade_execution_small_drop, trading_param=trading_param_small_drop)
 logging.info("starting a okx collective")
 price_cache = trading.price_okx.PriceCache([trading_manager, trading_manager_small_drop])
