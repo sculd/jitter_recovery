@@ -31,6 +31,7 @@ date_str_20230930 = "2023-09-30"
 
 base_okx = 'data/okx'
 base_binance = 'data/binance'
+base_gemini = 'data/gemini'
 # the aggregation bug was fixed from the data below.
 df_okx_20240103_0104 = pd.read_parquet(f'{base_okx}/df_okx_20240103_0104.parquet')
 df_okx_20240106_0109 = pd.read_parquet(f'{base_okx}/df_okx_20240106_0109.parquet')
@@ -55,6 +56,7 @@ df_binance_20240130_0201 = pd.read_parquet(f'{base_binance}/df_binance_20240130_
 df_binance_20240125_0202 = pd.read_parquet(f'{base_binance}/df_binance_20240125_0202.parquet')
 df_binance_20240203_0205 = pd.read_parquet(f'{base_binance}/df_binance_20240203_0205.parquet')
 df_binance_20240204_0206 = pd.read_parquet(f'{base_binance}/df_binance_20240204_0206.parquet')
+df_gemini_20240224_0226 = pd.read_parquet(f'{base_gemini}/df_gemini_20240224_0226.parquet')
 
 def get_close_between_datetime(df, sample_period_minutes, symbols, start_datetime_str, end_datetime_str, if_2023=True):
     df_between = df[(df.index >= start_datetime_str) & (df.index < end_datetime_str)][symbols].resample(f'{sample_period_minutes}min').last().dropna()

@@ -6,10 +6,13 @@ import algo.jitter_recovery.calculate
 
 
 
-def get_dfsts(df, trading_param):
+def get_dfsts(df, trading_param, symbol_filter=None):
     dfi = df.set_index(['timestamp', 'symbol'])
     all_symbols = df.symbol.unique()
-    all_symbols = [s for s in all_symbols if 'USDT' in s]
+    if symbol_filter is None:
+        symbol_filter = lambda s: 'USDT' in s
+
+    all_symbols = [s for s in all_symbols if symbol_filter(s)]
 
     if not trading_param.is_long_term:        
         initial_run_resolution = 4
@@ -21,7 +24,6 @@ def get_dfsts(df, trading_param):
     symbol_with_jumps = []
 
     for i, symbol in enumerate(all_symbols):
-        if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
         dfs_ = dfs.resample(f'{initial_run_resolution}min').last()
         jitter_recovery_trading_param_ = algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(window_)
@@ -48,7 +50,6 @@ def get_dfsts(df, trading_param):
     dfst_feature = df.set_index(['symbol', 'timestamp'])
     dfst_trading = df.set_index(['symbol', 'timestamp'])
     for i, symbol in enumerate(symbol_with_jumps):
-        if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
         
         df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
