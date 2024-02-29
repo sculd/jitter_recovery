@@ -71,7 +71,7 @@ def add_trading_columns(df_feature, df_collective_feature, trading_param):
             collective_featuers = {c: 0.0 for c in collective_feature_columns}
         status.update(collective_featuers, features, trading_param)
 
-        for k, v in {**features, **algo.jitter_recovery.calculate.status_as_dict(status)}.items():
+        for k, v in {**features, **algo.jitter_recovery.calculate_collective.status_as_dict(status)}.items():
             trading_dict[k].append(v)
         for k, v in collective_featuers.items():
             trading_dict[f'{k}_collective'].append(v)

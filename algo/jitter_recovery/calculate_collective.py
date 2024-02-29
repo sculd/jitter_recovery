@@ -75,6 +75,7 @@ class Status(BasicStatus):
     def reset(self):
         super().reset()
         self.highest_since_enter = 0
+        self.ch_from_highest_since_enter = 0
 
     def update(self, collective_features, features, trading_param) -> None:
         value = features['value']
@@ -89,14 +90,14 @@ class Status(BasicStatus):
             self.ch_from_enter = _get_ch(self.value_at_enter, value)
             self.ch_from_highest_since_enter = _get_ch(self.highest_since_enter, value)
 
-            if self.ch_from_highest_since_enter > trading_param.drop_threshold / 4.0 \
+            if self.ch_from_highest_since_enter < trading_param.exit_drop_threshold \
                 and self.timedelta_since_position_enter >= 5:
                 self.in_position = 0
 
             if self.ch_from_enter < trading_param.exit_drop_threshold:
                 self.in_position = 0
 
-            if value > (self.v_ch_min_is_to_when_enter - self.v_ch_min_is_from_when_enter) / 3.0 + self.v_ch_min_is_from_when_enter:
+            if value > self.v_ch_min_is_from_when_enter - (self.v_ch_min_is_from_when_enter - self.v_ch_min_is_to_when_enter) / 3.0:
                 self.in_position = 0
         else:
             should_enter_position = False
@@ -123,6 +124,9 @@ class Status(BasicStatus):
                 self.ch_from_highest_since_enter = 0
             else:
                 self.reset()
+
+    def __str__(self):
+        return ', '.join([f'{k}: {str(v)}' for k, v in vars(self).items()])
 
 
 

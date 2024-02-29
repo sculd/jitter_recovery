@@ -5,7 +5,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
     handlers=[
-        logging.FileHandler("logs/{}.log".format("log_live_okx")),
+        logging.FileHandler("logs/{}.log".format("log_live_okx_collective")),
         logging.StreamHandler(sys.stdout)
     ]
 )
