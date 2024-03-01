@@ -10,7 +10,7 @@ default_collective_drop_lower_threshold = -0.40
 default_drop_threshold, default_jump_from_drop_threshold, default_exit_drop_threshold = -0.15, +0.04, -0.02
 
 default_collective_small_drop_threshold = -0.03
-default_collective_small_drop_lower_threshold = -0.05
+default_collective_small_drop_lower_threshold = -0.15
 default_small_drop_threshold, default_jump_from_small_drop_threshold, default_exit_small_drop_threshold = -0.03, +0.005, -0.01
 
 

@@ -10,6 +10,13 @@ collective_feature_columns = collective_feature_columns_no_rolling + ['ch_window
 
 
 def get_dfsts(df, trading_param):
+    dfst_feature = get_dfst_feature(df, trading_param.feature_param)
+    dfst_trading = get_dfst_trading(df, dfst_feature, trading_param)
+
+    return dfst_feature, dfst_trading
+
+
+def get_dfst_feature(df, feature_param):
     dfi = df.set_index(['timestamp', 'symbol'])
     all_symbols = df.symbol.unique()
     all_symbols = [s for s in all_symbols if 'USDT' in s]
@@ -19,18 +26,16 @@ def get_dfsts(df, trading_param):
         if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
         
-        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
+        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, feature_param)
         del dfs
         
-        print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_min <= trading_param.drop_threshold * 0.9])} (feature)')
+        print(f'{i} symbol: {symbol} (feature)')
         
         for column in df_feature.columns:
             dfst_feature.loc[symbol, column] = df_feature[column].values
         del df_feature
 
-    dfst_trading = get_dfst_trading(df, dfst_feature, trading_param)
-
-    return dfst_feature, dfst_trading
+    return dfst_feature
 
 
 def get_dfst_trading(df, dfst_feature, trading_param):
