@@ -5,36 +5,62 @@ import algo.jitter_recovery.calculate
 
 
 
+def get_dfsts(df, trading_param, symbol_filter=None, approximate_feature=True):
+    if approximate_feature:
+        dfst_feature = get_dfst_feature_approximate(df, trading_param.feature_param, symbol_filter=symbol_filter)
+        symbol_with_jumps = dfst_feature[dfst_feature.ch_max > 0.1].index.get_level_values('symbol').unique().values
+        dfst_trading = get_dfst_trading_for_symbols(df, symbol_with_jumps, trading_param)
+    else:
+        dfst_feature = get_dfst_feature(df, trading_param.feature_param, symbol_filter=symbol_filter)
+        dfst_trading = get_dfst_trading(df, dfst_feature, trading_param)
 
-def get_dfsts(df, trading_param, symbol_filter=None):
+    return dfst_feature, dfst_trading
+
+
+def get_dfst_feature(df, feature_param, symbol_filter=None):
     dfi = df.set_index(['timestamp', 'symbol'])
     all_symbols = df.symbol.unique()
     if symbol_filter is None:
         symbol_filter = lambda s: 'USDT' in s
-
     all_symbols = [s for s in all_symbols if symbol_filter(s)]
 
-    if not trading_param.is_long_term:        
-        initial_run_resolution = 4
-    else:
-        initial_run_resolution = 5
+    dfst_feature = df.set_index(['symbol', 'timestamp'])
+    for i, symbol in enumerate(all_symbols):
+        if 'USDT' not in symbol: continue
+        dfs = dfi.xs(symbol, level=1)
+        
+        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, feature_param)
+        del dfs
+        
+        print(f'{i} symbol: {symbol} (feature)')
+        
+        for column in df_feature.columns:
+            dfst_feature.loc[symbol, column] = df_feature[column].values
+        
+        del df_feature
 
-    window_ = int(trading_param.feature_param.window / initial_run_resolution)
+    return dfst_feature
+
+
+def get_dfst_feature_approximate(df, feature_param, symbol_filter=None):
+    dfi = df.set_index(['timestamp', 'symbol'])
+    all_symbols = df.symbol.unique()
+    if symbol_filter is None:
+        symbol_filter = lambda s: 'USDT' in s
+    all_symbols = [s for s in all_symbols if symbol_filter(s)]
+
+    initial_run_resolution = 4
+    window_ = int(feature_param.window / initial_run_resolution)
     dfst_feature_approximate = None
-    symbol_with_jumps = []
 
     for i, symbol in enumerate(all_symbols):
         dfs = dfi.xs(symbol, level=1)
         dfs_ = dfs.resample(f'{initial_run_resolution}min').last()
-        jitter_recovery_trading_param_ = algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(window_)
+        feature_param_ = algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(window_)
         
-        df_feature_ = algo.jitter_recovery.calculate.get_feature_df(dfs_, jitter_recovery_trading_param_)
+        df_feature_ = algo.jitter_recovery.calculate.get_feature_df(dfs_, feature_param_)
         del dfs
         del dfs_
-        
-        print(f'{i} symbol: {symbol}: {len(df_feature_[df_feature_.ch_max >= trading_param.jump_threshold * 0.9])} (approx)')
-        if len(df_feature_[df_feature_.ch_max >= trading_param.jump_threshold * 0.9]) > 0:
-            symbol_with_jumps.append(symbol)
         
         df_feature_['symbol'] = symbol
         if dfst_feature_approximate is None:
@@ -45,21 +71,20 @@ def get_dfsts(df, trading_param, symbol_filter=None):
         del df_feature_
 
     dfst_feature_approximate = dfst_feature_approximate.reset_index().set_index(['symbol', 'timestamp'])
-    print(f'symbol_with_jumps: {len((symbol_with_jumps))}')
+    return dfst_feature_approximate
 
-    dfst_feature = df.set_index(['symbol', 'timestamp'])
+
+def get_dfst_trading_for_symbols(df, symbols, trading_param):        
+    dfi = df.set_index(['timestamp', 'symbol'])
+
     dfst_trading = df.set_index(['symbol', 'timestamp'])
-    for i, symbol in enumerate(symbol_with_jumps):
+    for i, symbol in enumerate(symbols):
         dfs = dfi.xs(symbol, level=1)
-        
         df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
         del dfs
 
         print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_max >= trading_param.jump_threshold * 0.9])}')
         df_trading = add_trading_columns(df_feature, trading_param)
-        
-        for column in df_feature.columns:
-            dfst_feature.loc[symbol, column] = df_feature[column].values
 
         for column in df_trading.columns:
             dfst_trading.loc[symbol, column] = df_trading[column].values
@@ -67,7 +92,27 @@ def get_dfsts(df, trading_param, symbol_filter=None):
         del df_feature
         del df_trading
 
-    return dfst_feature_approximate, dfst_feature, dfst_trading
+    return dfst_trading
+
+
+def get_dfst_trading(df, dfst_feature, trading_param):
+    symbol_with_jumps = dfst_feature[dfst_feature.ch_max > trading_param.jump_threshold * 0.9].index.get_level_values('symbol').unique().values
+    print(f'symbol_with_jumps: {len((symbol_with_jumps))}')
+
+    dfst_trading = df.set_index(['symbol', 'timestamp'])
+    for i, symbol in enumerate(symbol_with_jumps):
+        df_feature = dfst_feature.xs(symbol, level=0)
+
+        print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_max >= trading_param.jump_threshold * 0.9])}')
+        df_trading = add_trading_columns(df_feature, trading_param)
+
+        for column in df_trading.columns:
+            dfst_trading.loc[symbol, column] = df_trading[column].values
+
+        del df_feature
+        del df_trading
+
+    return dfst_trading
 
 
 def add_trading_columns(df_feature, trading_param):
@@ -107,6 +152,7 @@ def investigate_symbol(df, symbol_investigate, trading_param, figsize=None):
     
     if len(df_trading[df_trading.in_position == 1]) == 0:
         print(f'no trading happens')
+        dfs[['close']].plot()
         return df_feature, df_trading
         
     figsize = figsize if figsize else (6, 9)
