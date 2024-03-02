@@ -134,7 +134,7 @@ def add_trading_columns(df_feature, trading_param):
     return df_feature_trading
 
 
-def investigate_trading(dfst_feature_approximate, dfst_trading):
+def investigate_trading(dfst_trading):
     fig, ax_profit = plt.subplots(1, figsize=(16,2))
     ax_profit.plot(dfst_trading[['profit']].groupby('timestamp').sum().cumsum())
 
