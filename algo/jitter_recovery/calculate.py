@@ -5,7 +5,7 @@ from numba import njit
 from numba.experimental import jitclass
 
 
-default_window = 60
+default_window = 30
 default_window_longterm = 240
 
 default_jump_threshold, default_drop_from_jump_threshold, default_exit_jumpt_threshold = 0.20, -0.04, 0.02

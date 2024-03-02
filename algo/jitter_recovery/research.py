@@ -83,7 +83,7 @@ def get_dfst_trading_for_symbols(df, symbols, trading_param):
         df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
         del dfs
 
-        print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_max >= trading_param.jump_threshold * 0.9])}')
+        print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_max >= trading_param.jump_threshold * 0.9])} (trading)')
         df_trading = add_trading_columns(df_feature, trading_param)
 
         for column in df_trading.columns:
