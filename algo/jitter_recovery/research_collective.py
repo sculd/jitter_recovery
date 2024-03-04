@@ -44,15 +44,19 @@ def get_dfst_trading(df, dfst_feature, trading_param):
       
     df_collective_feature = dfst_feature.dropna().groupby('timestamp')[collective_feature_columns_no_rolling].median().resample('1min').asfreq().ffill()
     df_collective_feature['ch_window30_min'] = df_collective_feature.ch.rolling(window=30).min() 
-    df_collective_feature['ch_min_window30_min'] = df_collective_feature.ch_min.rolling(window=30).min() 
+    df_collective_feature['ch_window30_max'] = df_collective_feature.ch.rolling(window=30).max() 
 
     dfst_trading = df.set_index(['symbol', 'timestamp'])
     for i, symbol in enumerate(all_symbols):
         if 'USDT' not in symbol: continue
         
         df_feature = dfst_feature.xs(symbol, level=0)
-
-        print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_min <= trading_param.drop_threshold * 0.9])} (trading)')
+        
+        if trading_param.collective_drop_recovery_trading_param  is not None:
+            l = len(df_feature[df_feature.ch_min <= trading_param.collective_drop_recovery_trading_param.drop_threshold * 0.9])
+        elif trading_param.collective_jump_recovery_trading_param  is not None:
+            l = len(df_feature[df_feature.ch_max >= trading_param.collective_jump_recovery_trading_param.jump_threshold * 0.9])
+        print(f'{i} symbol: {symbol} ({l}):(trading)')
         df_trading = add_trading_columns(df_feature, df_collective_feature, trading_param)
         
         for column in df_trading.columns:
@@ -94,14 +98,17 @@ def investigate_symbol(df, df_collective_feature, symbol_investigate, trading_pa
     df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
     df_trading = add_trading_columns(df_feature, df_collective_feature, trading_param)
     
-    if len(df_trading[df_trading.in_position == 1]) == 0:
+    if len(df_trading[df_trading.in_position != 0]) == 0:
         print(f'no trading happens')
+        fig, (ax_close, ax_collective) = plt.subplots(2, figsize=figsize)
+        ax_close.plot(dfs[['close']])
+        ax_collective.plot(df_collective_feature[['ch', 'ch_window30_min', 'ch_window30_max']])
         return df_feature, df_trading
-        
+
     figsize = figsize if figsize else (6, 9)
     fig, (ax_close, ax_collective, ax_profit, ax_chs, ax_in_position, ax_profit_in_position) = plt.subplots(6, figsize=figsize)
     ax_close.plot(dfs[['close']])
-    ax_collective.plot(df_collective_feature[['ch', 'ch_window30_min']])
+    ax_collective.plot(df_collective_feature[['ch', 'ch_window30_min', 'ch_window30_max']])
     ax_profit.plot(df_trading[['profit']].cumsum())
     ax_chs.plot(df_trading[['ch_min', 'ch_since_min']])
     ax_in_position.plot(df_trading[['in_position']])
@@ -128,7 +135,7 @@ def investigate_symbol(df, df_collective_feature, symbol_investigate, trading_pa
 
     ix_head = df_trading[df_trading.position_changed == +1].index[0]
     ix_tail = df_trading[df_trading.position_changed == -1].index[-1]
-    df_plot = df_collective_feature[['ch', 'ch_window30_min']].loc[ix_head:ix_tail]
+    df_plot = df_collective_feature[['ch', 'ch_window30_min', 'ch_window30_max']].loc[ix_head:ix_tail]
     ax = df_plot.plot(figsize=(9,2))
     ymin, ymax = df_plot[['ch']].min(), df_trading[['ch']].max()
     ax.vlines(x=list(df_trading[df_trading.position_changed == +1].index), ymin=ymin, ymax=ymax, color='b', linestyles='dashed', label='enter')

@@ -96,14 +96,20 @@ def get_dfst_trading_for_symbols(df, symbols, trading_param):
 
 
 def get_dfst_trading(df, dfst_feature, trading_param):
-    symbol_with_jumps = dfst_feature[dfst_feature.ch_max > trading_param.jump_threshold * 0.9].index.get_level_values('symbol').unique().values
+    symbol_with_jumps = dfst_feature[
+        (dfst_feature.ch_max > trading_param.jump_threshold)
+        & (dfst_feature.ch_since_max < trading_param.drop_from_jump_threshold)
+        & (dfst_feature.distance_max_ch < 10)
+        & (dfst_feature.distance_max_ch > 2)
+        ].index.get_level_values('symbol').unique().values
+
     print(f'symbol_with_jumps: {len((symbol_with_jumps))}')
 
     dfst_trading = df.set_index(['symbol', 'timestamp'])
     for i, symbol in enumerate(symbol_with_jumps):
         df_feature = dfst_feature.xs(symbol, level=0)
 
-        print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_max >= trading_param.jump_threshold * 0.9])}')
+        print(f'{i} symbol: {symbol}: {len(df_feature[df_feature.ch_max > trading_param.jump_threshold])} (trading)')
         df_trading = add_trading_columns(df_feature, trading_param)
 
         for column in df_trading.columns:
@@ -131,17 +137,20 @@ def add_trading_columns(df_feature, trading_param):
     df_feature_trading['profit_raw'] = -df_feature_trading.value.diff() * df_feature_trading.in_position.shift()
     df_feature_trading['profit'] = -df_feature_trading.value.pct_change() * df_feature_trading.in_position.shift()
 
+    del trading_dict
     return df_feature_trading
 
 
 def investigate_trading(dfst_trading):
-    fig, ax_profit = plt.subplots(1, figsize=(16,2))
-    ax_profit.plot(dfst_trading[['profit']].groupby('timestamp').sum().cumsum())
-
+    print(f'profit sum: {dfst_trading.profit.sum()}')
     df_position_changed = dfst_trading.groupby('timestamp').sum()[['position_changed']]
 
     if len(df_position_changed[df_position_changed.position_changed != 0]) == 0:
         print(f'no trading happens')
+        return
+
+    fig, ax_profit = plt.subplots(1, figsize=(16,2))
+    ax_profit.plot(dfst_trading.groupby('timestamp').sum().cumsum()[['profit']])
 
 
 def investigate_symbol(df, symbol_investigate, trading_param, figsize=None):

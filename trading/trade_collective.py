@@ -45,7 +45,7 @@ class TradeManager:
 
         ch_window30_min = min([tch[1] for tch in self.collective_chs])
         ch_min_window30_min = min([tch[1] for tch in self.collective_ch_mins])
-        return {'ch_window30_min': ch_window30_min, 'ch_min_window30_min': ch_min_window30_min}
+        return {'ch_window30_min': ch_window30_min}
     
     def on_new_minutes(self, symbol, timestamp_epoch_seconds, timestamp_epochs_values):
         '''
