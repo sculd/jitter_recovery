@@ -2,7 +2,7 @@ import pandas as pd
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import algo.jitter_recovery.calculate
-import algo.jitter_recovery.calculate_collective
+import algo.collective_jitter_recovery.calculate
 
 
 collective_feature_columns_no_rolling = ['ch', 'ch_max', 'ch_min', 'ch_since_max', 'ch_since_min']
@@ -69,7 +69,7 @@ def get_dfst_trading(df, dfst_feature, trading_param):
 
 
 def add_trading_columns(df_feature, df_collective_feature, trading_param):
-    status = algo.jitter_recovery.calculate_collective.Status()
+    status = algo.collective_jitter_recovery.calculate_collective.Status()
     trading_dict = defaultdict(list)
 
     for i in df_feature.index:
@@ -80,7 +80,7 @@ def add_trading_columns(df_feature, df_collective_feature, trading_param):
             collective_featuers = {c: 0.0 for c in collective_feature_columns}
         status.update(collective_featuers, features, trading_param)
 
-        for k, v in {**features, **algo.jitter_recovery.calculate_collective.status_as_dict(status)}.items():
+        for k, v in {**features, **algo.collective_jitter_recovery.calculate_collective.status_as_dict(status)}.items():
             trading_dict[k].append(v)
         for k, v in collective_featuers.items():
             trading_dict[f'{k}_collective'].append(v)

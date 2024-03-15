@@ -1,8 +1,8 @@
-import pandas as pd, numpy as np, datetime
+import numpy as np, datetime
 import pytz
 import logging
 
-import algo.jitter_recovery.calculate_collective
+import algo.collective_jitter_recovery.calculate
 import trading.execution
 from collections import defaultdict, deque
 
@@ -14,11 +14,11 @@ def epoch_seconds_to_datetime(timestamp_seconds):
 
 class TradeManager:
     def __init__(self, trading_param=None, trade_execution=None):
-        default_trading_param = algo.jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam.get_default_param()
+        default_trading_param = algo.collective_jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam.get_default_param()
 
         self.trading_param = trading_param if trading_param is not None else default_trading_param
         self.trade_execution = trade_execution if trade_execution else trading.execution.TradeExecution()
-        self.status_per_symbol = defaultdict(algo.jitter_recovery.calculate_collective.Status)
+        self.status_per_symbol = defaultdict(algo.collective_jitter_recovery.calculate_collective.Status)
         self.ch_per_symbol = defaultdict(float)
         self.ch_min_per_symbol = defaultdict(float)
         self.collective_chs = deque()

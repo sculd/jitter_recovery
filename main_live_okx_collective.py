@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # take environment variables from .env.
 
-import algo.jitter_recovery.calculate_collective
+import algo.collective_jitter_recovery.calculate
 import trading.trade_collective, trading.execution_okx
 import trading.price_okx
 
@@ -24,11 +24,11 @@ import publish.telegram
 publish.telegram.post_message(f"starting a new okx collective live at {datetime.datetime.now()}")
 
 trade_execution = trading.execution_okx.TradeExecution(target_betsize=100, leverage=5)
-trading_param = algo.jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam.get_default_param()
+trading_param = algo.collective_jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam.get_default_param()
 trading_manager = trading.trade_collective.TradeManager(trade_execution=trade_execution, trading_param=trading_param)
 
 trade_execution_small_drop = trading.execution_okx.TradeExecution(target_betsize=100, leverage=5)
-trading_param_small_drop = algo.jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam.get_default_param_small_drop()
+trading_param_small_drop = algo.collective_jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam.get_default_param_small_drop()
 trading_manager_small_drop = trading.trade_collective.TradeManager(trade_execution=trade_execution_small_drop, trading_param=trading_param_small_drop)
 logging.info("starting a okx collective")
 price_cache = trading.price_okx.PriceCache([trading_manager, trading_manager_small_drop])

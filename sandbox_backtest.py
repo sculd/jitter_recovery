@@ -11,16 +11,15 @@ logging.basicConfig(
     ]
 )
 
-import trading.trade
 import trading.trade_collective
 
 is_long_term=True
 
 #trading_manager = trading.trade.TradeManager(is_long_term=is_long_term)
 
-import algo.jitter_recovery.calculate_collective
-feature_param = algo.jitter_recovery.calculate_collective.CollectiveRecoveryFeatureParam(40)
-trading_param = algo.jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam(
+import algo.collective_jitter_recovery.calculate
+feature_param = algo.collective_jitter_recovery.calculate_collective.CollectiveRecoveryFeatureParam(40)
+trading_param = algo.collective_jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam(
     feature_param, 
     collective_drop_threshold = -0.03,
     collective_drop_lower_threshold = -0.05,
