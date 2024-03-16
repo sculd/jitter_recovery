@@ -11,15 +11,15 @@ logging.basicConfig(
     ]
 )
 
-import trading.trade_collective
+import algo.collective_jitter_recovery.trade
 
 is_long_term=True
 
 #trading_manager = trading.trade.TradeManager(is_long_term=is_long_term)
 
 import algo.collective_jitter_recovery.calculate
-feature_param = algo.collective_jitter_recovery.calculate_collective.CollectiveRecoveryFeatureParam(40)
-trading_param = algo.collective_jitter_recovery.calculate_collective.CollectiveRecoveryTradingParam(
+feature_param = algo.collective_jitter_recovery.calculate.CollectiveRecoveryFeatureParam(40)
+trading_param = algo.collective_jitter_recovery.calculate.CollectiveRecoveryTradingParam(
     feature_param, 
     collective_drop_threshold = -0.03,
     collective_drop_lower_threshold = -0.05,
@@ -27,7 +27,7 @@ trading_param = algo.collective_jitter_recovery.calculate_collective.CollectiveR
     jump_from_drop_threshold = +0.005,
     exit_drop_threshold  = -0.01,
     )
-trading_manager = trading.trade_collective.TradeManager(trading_param=trading_param)
+trading_manager = algo.collective_jitter_recovery.trade.TradeManager(trading_param=trading_param)
 
 
 filename = "data/okx/csv_okx_20240101_0115.csv"

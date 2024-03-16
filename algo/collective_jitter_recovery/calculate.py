@@ -121,6 +121,14 @@ class CollectiveRecoveryTradingParam:
             CollectiveJumpRecoveryTradingParam.get_default_param_small_jump(), 
             )
 
+    @staticmethod
+    def get_default_param_small_drop():
+        return CollectiveRecoveryTradingParam(
+            CollectiveRecoveryFeatureParam.get_default_param(),
+            CollectiveDropRecoveryTradingParam.get_default_param_small_drop(),
+            collective_jump_recovery_trading_param=None,
+            )
+
     def __str__(self):
         return ', '.join([f'{k}: {str(v)}' for k, v in vars(self).items()])
 
@@ -140,7 +148,7 @@ class Status(BasicStatus):
         self.highest_since_enter = 0
         self.ch_from_highest_since_enter = 0
 
-    def update(self, collective_features, features, trading_param) -> None:
+    def update(self, collective_features, features, trading_param: CollectiveRecoveryTradingParam) -> None:
         value = features['value']
         if self.in_position != 0:
             if value < self.lowest_since_enter:
