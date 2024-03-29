@@ -92,6 +92,7 @@ def _read_df_daily(label: str, t_id: str, t_from: datetime.datetime, t_to: datet
         return None
     filename = _get_filename(label, t_id, t_from, t_to)
     if not os.path.exists(filename):
+        logging.info(f"{filename=} does not exist.")
         return None
     return pd.read_parquet(filename)
 
@@ -116,7 +117,7 @@ def read_df(
         date_str_from=date_str_from,
         date_str_to=date_str_to,
     )
-    t_ranges = market_data.ingest.bq.cache._split_t_range(t_from, t_to, interval=_cache_interval)
+    t_ranges = market_data.ingest.bq.cache._split_t_range(t_from, t_to)
     df_concat = None
     for t_range in t_ranges:
         df_cache = _read_df_daily(label, t_id, t_range[0], t_range[-1])
