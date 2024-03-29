@@ -4,6 +4,14 @@ import matplotlib.pyplot as plt
 import algo.jitter_recovery.calculate
 
 
+_feature_label_prefix = 'changes'
+
+def get_feature_label_for_caching(feature_param: algo.jitter_recovery.calculate.JitterRecoveryFeatureParam, label_suffix=None) -> str:
+    ret = f"{_feature_label_prefix}_{feature_param.as_label()}"
+    if label_suffix is not None:
+        ret = f"{ret}_{label_suffix}"
+    return ret
+
 
 def get_dfsts(df, trading_param, symbol_filter=None, approximate_feature=True):
     if approximate_feature:

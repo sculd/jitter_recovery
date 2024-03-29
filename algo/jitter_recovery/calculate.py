@@ -12,11 +12,6 @@ default_jump_threshold, default_drop_from_jump_threshold, default_exit_jumpt_thr
 default_jump_threshold_longterm, default_drop_from_jump_threshold_longterm, default_exit_jumpt_threshold_longterm = 0.40, -0.10, 0.05
 
 
-feature_param_spec = [
-    ('window', numba.int32),
-    ]
-
-@jitclass(spec=feature_param_spec)
 class JitterRecoveryFeatureParam:
     def __init__(self, window):
         self.window = window
@@ -31,14 +26,12 @@ class JitterRecoveryFeatureParam:
         return JitterRecoveryFeatureParam(
             default_window_longterm)
 
+    def as_label(self) -> str:
+        return '_'.join([f'{k}{v}' for k, v in vars(self).items()])
 
-trading_param_spec = [
-    ('feature_param', numba.typeof(JitterRecoveryFeatureParam(20))),
-    ('jump_threshold', numba.float64),
-    ('drop_from_jump_threshold', numba.float64),
-    ('exit_jumpt_threshold', numba.float64),
-    ('is_long_term', numba.boolean),
-    ]
+    def __str__(self):
+        return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
+
 
 class JitterRecoveryTradingParam:
     def __init__(self, feature_param, jump_threshold, drop_from_jump_threshold, exit_jumpt_threshold, is_long_term):
