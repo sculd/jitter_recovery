@@ -76,10 +76,13 @@ def cache_df(
         dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
         export_mode: market_data.ingest.bq.common.EXPORT_MODE,
         overwrite = False,
+        skip_first_day = True,
 ) -> None:
     t_id = market_data.ingest.bq.common.get_full_table_id(dataset_mode, export_mode)
     df_dailys = _split_df_by_day(df)
-    for df_daily in df_dailys:
+    for i, df_daily in enumerate(df_dailys):
+        if skip_first_day and i == 0:
+            continue
         _cache_df_daily(df_daily, label, t_id, overwrite=overwrite)
 
 

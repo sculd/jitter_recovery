@@ -3,20 +3,22 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import algo.jitter_recovery.calculate
 import algo.collective_jitter_recovery.calculate
-
+from algo.collective_jitter_recovery.calculate import CollectiveRecoveryFeatureParam
 
 collective_feature_columns_no_rolling = ['ch', 'ch_max', 'ch_min', 'ch_since_max', 'ch_since_min']
 collective_feature_columns = collective_feature_columns_no_rolling + ['ch_window30_min']
 
-
-def get_dfsts(df, trading_param):
-    dfst_feature = get_dfst_feature(df, trading_param.feature_param)
-    dfst_trading = get_dfst_trading(df, dfst_feature, trading_param)
-
-    return dfst_feature, dfst_trading
+_feature_label_prefix = 'collectivechanges'
 
 
-def get_dfst_feature(df, feature_param):
+def get_feature_label_for_caching(feature_param: CollectiveRecoveryFeatureParam, label_suffix=None) -> str:
+    ret = f"{_feature_label_prefix}_{feature_param.as_label()}"
+    if label_suffix is not None:
+        ret = f"{ret}_{label_suffix}"
+    return ret
+
+
+def get_dfst_feature(df, feature_param: CollectiveRecoveryFeatureParam):
     dfi = df.set_index(['timestamp', 'symbol'])
     all_symbols = df.symbol.unique()
     all_symbols = [s for s in all_symbols if 'USDT' in s]
@@ -35,13 +37,52 @@ def get_dfst_feature(df, feature_param):
             dfst_feature.loc[symbol, column] = df_feature[column].values
         del df_feature
 
-    return dfst_feature
+    dfst_with_collective_feature = _append_collective_feature(df, dfst_feature, feature_param)
+    return dfst_with_collective_feature
+
+
+def _append_collective_feature(df, dfst_feature, feature_param: CollectiveRecoveryFeatureParam):
+    all_symbols = dfst_feature.index.get_level_values('symbol').unique()
+    all_symbols = [s for s in all_symbols if 'USDT' in s]
+
+    df_collective_feature = _get_df_collective_feature(dfst_feature, feature_param)
+
+    dfst_with_collective_feature = df.set_index(['symbol', 'timestamp'])
+    for i, symbol in enumerate(all_symbols):
+        if 'USDT' not in symbol: continue
+        print(f'{i} symbol: {symbol} (collective_feature)')
+
+        df_feature = dfst_feature.xs(symbol, level=0)
+        for column in df_feature.columns:
+            dfst_with_collective_feature.loc[symbol, column] = df_feature[column].values
+
+        df_collective_feature_index_aligned = df_collective_feature[
+            (df_collective_feature.index >= dfst_feature.xs(symbol, level='symbol').index[0]) &
+            (df_collective_feature.index <= dfst_feature.xs(symbol, level='symbol').index[-1])
+            ]
+        for column in df_collective_feature.columns:
+            dfst_with_collective_feature.loc[symbol, f'{column}_collective'] = df_collective_feature_index_aligned[column].values
+        del df_feature
+
+    del df_collective_feature
+
+    return dfst_with_collective_feature
+
+
+def _get_df_collective_feature(dfst_feature, feature_param: CollectiveRecoveryFeatureParam):
+    df_collective_feature = dfst_feature.dropna().groupby('timestamp')[
+        collective_feature_columns_no_rolling].median().resample('1min').asfreq().ffill()
+    df_collective_feature['ch_std'] = dfst_feature.dropna().groupby('timestamp')[
+        ['ch']].std().resample('1min').asfreq().ffill().values
+    df_collective_feature[f'ch_window{feature_param.collective_window}_min'] = df_collective_feature.ch.rolling(window=feature_param.collective_window).min()
+    df_collective_feature[f'ch_window{feature_param.collective_window}_max'] = df_collective_feature.ch.rolling(window=feature_param.collective_window).max()
+    return df_collective_feature
 
 
 def get_dfst_trading(df, dfst_feature, trading_param):
     all_symbols = dfst_feature.index.get_level_values('symbol').unique()
     all_symbols = [s for s in all_symbols if 'USDT' in s]
-      
+
     df_collective_feature = dfst_feature.dropna().groupby('timestamp')[collective_feature_columns_no_rolling].median().resample('1min').asfreq().ffill()
     df_collective_feature['ch_window30_min'] = df_collective_feature.ch.rolling(window=30).min() 
     df_collective_feature['ch_window30_max'] = df_collective_feature.ch.rolling(window=30).max() 
@@ -91,6 +132,7 @@ def add_trading_columns(df_feature, df_collective_feature, trading_param):
     df_feature_trading['profit'] = df_feature_trading.value.pct_change() * df_feature_trading.in_position.shift()
 
     return df_feature_trading
+
 
 def investigate_symbol(df, df_collective_feature, symbol_investigate, trading_param, figsize=None):
     dfi = df.set_index(['timestamp', 'symbol'])

@@ -4,6 +4,7 @@ from algo.jitter_recovery.calculate import Status as BasicStatus
 
 
 default_window = 40
+default_collective_window = 40
 
 default_collective_drop_threshold = -0.10
 default_collective_drop_lower_threshold = -0.40
@@ -23,13 +24,17 @@ default_small_jump_threshold, default_drop_from_small_jump_threshold, default_ex
 
 
 class CollectiveRecoveryFeatureParam:
-    def __init__(self, window):
+    def __init__(self, window: int, collective_window: int):
         self.window = window
+        self.collective_window = collective_window
 
     @staticmethod
     def get_default_param():
         return CollectiveRecoveryFeatureParam(
-            default_window)
+            default_window, default_collective_window)
+
+    def as_label(self):
+        return '_'.join([f'{k}{v}' for k, v in vars(self).items()])
 
     def __str__(self):
         return ', '.join([f'{k}: {str(v)}' for k, v in vars(self).items()])
