@@ -5,6 +5,7 @@ import algo.jitter_recovery.calculate
 
 
 _feature_label_prefix = '(changes)'
+_trading_label_prefix = '(changes_trading)'
 
 _primitives = (bool, str, int, float, type(None))
 
@@ -14,13 +15,35 @@ def _is_primitive(obj):
 def _param_as_label(param):
     if _is_primitive(param):
         return str(param)
-    return '_'.join([f'{k}({_param_as_label(v)})' for k, v in vars(param).items()])
+    return '/'.join([f'{k}({_param_as_label(v)})' for k, v in vars(param).items()])
 
-def get_feature_label_for_caching(feature_param: algo.jitter_recovery.calculate.JitterRecoveryFeatureParam, label_suffix=None) -> str:
-    ret = f"{_feature_label_prefix}_{_param_as_label(feature_param)}"
+def _get_param_label_for_caching(param, label_prefix, label_suffix=None) -> str:
+    raw_label = _param_as_label(param)
+    label_tokens = raw_label.split('/')
+    label_dirs = []
+    label_dir = ''
+    for label_token in label_tokens:
+        label_dir += f'_{label_token}'
+        if len(label_dir) > 200:
+            label_dirs.append(label_dir[1:])
+            label_dir = ''
+
+    if len(label_dir) > 1:
+        label_dirs.append(label_dir[1:])
+
+    label = '/'.join(label_dirs)
+    ret = f"{label_prefix}_{label}"
     if label_suffix is not None:
         ret = f"{ret}_{label_suffix}"
     return ret
+
+
+def get_feature_label_for_caching(feature_param: algo.jitter_recovery.calculate.JitterRecoveryFeatureParam, label_suffix=None) -> str:
+    return _get_param_label_for_caching(feature_param, _feature_label_prefix, label_suffix=label_suffix)
+
+def get_trading_label_for_caching(trading_param: algo.jitter_recovery.calculate.JitterRecoveryFeatureParam, label_suffix=None) -> str:
+    return _get_param_label_for_caching(trading_param, _trading_label_prefix, label_suffix=label_suffix)
+
 
 
 def get_dfst_feature(df, feature_param, symbol_filter=None):

@@ -16,14 +16,14 @@ _primitives = (bool, str, int, float, type(None))
 def _is_primitive(obj):
     return isinstance(obj, _primitives)
 
-def _param_as_label(param, separator: str):
+def _param_as_label(param):
     if _is_primitive(param):
         return str(param)
     # new directory is used to avoid the file name limit (256) violation.
-    return separator.join([f'{k}({_param_as_label(v, separator=separator)})' for k, v in vars(param).items()])
+    return '/'.join([f'{k}({_param_as_label(v)})' for k, v in vars(param).items()])
 
 def _get_param_label_for_caching(param, label_prefix, label_suffix=None) -> str:
-    raw_label = _param_as_label(param, separator='/')
+    raw_label = _param_as_label(param)
     label_tokens = raw_label.split('/')
     label_dirs = []
     label_dir = ''
@@ -120,7 +120,8 @@ def get_dfst_trading(dfst_feature, trading_param):
         if 'USDT' not in symbol: continue
         
         df_feature = dfst_feature.xs(symbol, level=0)
-        
+
+        l = 0
         if trading_param.collective_drop_recovery_trading_param  is not None:
             l = len(df_feature[df_feature.ch_min <= trading_param.collective_drop_recovery_trading_param.drop_threshold * 0.99])
         elif trading_param.collective_jump_recovery_trading_param  is not None:
@@ -132,6 +133,7 @@ def get_dfst_trading(dfst_feature, trading_param):
             if column in df_feature.columns:
                 continue
             dfst_trading.loc[symbol, column] = df_trading[column].values
+        del df_feature
         del df_trading
 
     return dfst_trading
