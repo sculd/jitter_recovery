@@ -70,6 +70,17 @@ def _cache_df_daily(df_daily: pd.DataFrame, label: str, t_id: str, overwrite=Tru
         df_daily.to_parquet(filename)
 
 
+def _read_df_daily(label: str, t_id: str, t_from: datetime.datetime, t_to: datetime.datetime) -> typing.Optional[pd.DataFrame]:
+    if not market_data.ingest.bq.cache._is_exact_cache_interval(t_from, t_to):
+        logging.info(f"{t_from} to {t_to} do not match a full day thus will not read from the cache.")
+        return None
+    filename = _get_filename(label, t_id, t_from, t_to)
+    if not os.path.exists(filename):
+        logging.info(f"{filename=} does not exist.")
+        return None
+    return pd.read_parquet(filename)
+
+
 def cache_df(
         df: pd.DataFrame,
         label: str,
@@ -84,17 +95,6 @@ def cache_df(
         if skip_first_day and i == 0:
             continue
         _cache_df_daily(df_daily, label, t_id, overwrite=overwrite)
-
-
-def _read_df_daily(label: str, t_id: str, t_from: datetime.datetime, t_to: datetime.datetime) -> typing.Optional[pd.DataFrame]:
-    if not market_data.ingest.bq.cache._is_exact_cache_interval(t_from, t_to):
-        logging.info(f"{t_from} to {t_to} do not match a full day thus will not read from the cache.")
-        return None
-    filename = _get_filename(label, t_id, t_from, t_to)
-    if not os.path.exists(filename):
-        logging.info(f"{filename=} does not exist.")
-        return None
-    return pd.read_parquet(filename)
 
 
 def read_df(
