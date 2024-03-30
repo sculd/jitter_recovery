@@ -3,19 +3,51 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import algo.jitter_recovery.calculate
 import algo.collective_jitter_recovery.calculate
-from algo.collective_jitter_recovery.calculate import CollectiveRecoveryFeatureParam
+from algo.collective_jitter_recovery.calculate import CollectiveRecoveryFeatureParam, CollectiveDropRecoveryTradingParam
 
 collective_feature_columns_no_rolling = ['ch', 'ch_max', 'ch_min', 'ch_since_max', 'ch_since_min']
 collective_feature_columns = collective_feature_columns_no_rolling + ['ch_window30_min']
 
-_feature_label_prefix = 'collectivechanges'
+_feature_label_prefix = '(collectivechanges)'
+_trading_label_prefix = '(collectivechanges_trading)'
 
+_primitives = (bool, str, int, float, type(None))
 
-def get_feature_label_for_caching(feature_param: CollectiveRecoveryFeatureParam, label_suffix=None) -> str:
-    ret = f"{_feature_label_prefix}_{feature_param.as_label()}"
+def _is_primitive(obj):
+    return isinstance(obj, _primitives)
+
+def _param_as_label(param, separator: str):
+    if _is_primitive(param):
+        return str(param)
+    # new directory is used to avoid the file name limit (256) violation.
+    return separator.join([f'{k}({_param_as_label(v, separator=separator)})' for k, v in vars(param).items()])
+
+def _get_param_label_for_caching(param, label_prefix, label_suffix=None) -> str:
+    raw_label = _param_as_label(param, separator='/')
+    label_tokens = raw_label.split('/')
+    label_dirs = []
+    label_dir = ''
+    for label_token in label_tokens:
+        label_dir += f'_{label_token}'
+        if len(label_dir) > 200:
+            label_dirs.append(label_dir[1:])
+            label_dir = ''
+
+    if len(label_dir) > 1:
+        label_dirs.append(label_dir[1:])
+
+    label = '/'.join(label_dirs)
+    ret = f"{label_prefix}_{label}"
     if label_suffix is not None:
         ret = f"{ret}_{label_suffix}"
     return ret
+
+
+def get_feature_label_for_caching(feature_param: algo.jitter_recovery.calculate.JitterRecoveryFeatureParam, label_suffix=None) -> str:
+    return _get_param_label_for_caching(feature_param, _feature_label_prefix, label_suffix=label_suffix)
+
+def get_trading_label_for_caching(trading_param: CollectiveDropRecoveryTradingParam, label_suffix=None) -> str:
+    return _get_param_label_for_caching(trading_param, _trading_label_prefix, label_suffix=label_suffix)
 
 
 def get_dfst_feature(df, feature_param: CollectiveRecoveryFeatureParam):
@@ -128,7 +160,7 @@ def investigate_symbol(df, df_collective_feature, symbol_investigate, trading_pa
     dfi = df.set_index(['timestamp', 'symbol'])
     dfs = dfi.xs(symbol_investigate, level=1)
     df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
-    df_trading = add_trading_columns(df_feature, df_collective_feature, trading_param)
+    df_trading = add_trading_columns(df_feature, trading_param)
     
     if len(df_trading[df_trading.in_position != 0]) == 0:
         print(f'no trading happens')

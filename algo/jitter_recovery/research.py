@@ -4,10 +4,20 @@ import matplotlib.pyplot as plt
 import algo.jitter_recovery.calculate
 
 
-_feature_label_prefix = 'changes'
+_feature_label_prefix = '(changes)'
+
+_primitives = (bool, str, int, float, type(None))
+
+def _is_primitive(obj):
+    return isinstance(obj, _primitives)
+
+def _param_as_label(param):
+    if _is_primitive(param):
+        return str(param)
+    return '_'.join([f'{k}({_param_as_label(v)})' for k, v in vars(param).items()])
 
 def get_feature_label_for_caching(feature_param: algo.jitter_recovery.calculate.JitterRecoveryFeatureParam, label_suffix=None) -> str:
-    ret = f"{_feature_label_prefix}_{feature_param.as_label()}"
+    ret = f"{_feature_label_prefix}_{_param_as_label(feature_param)}"
     if label_suffix is not None:
         ret = f"{ret}_{label_suffix}"
     return ret

@@ -26,9 +26,6 @@ class JitterRecoveryFeatureParam:
         return JitterRecoveryFeatureParam(
             default_window_longterm)
 
-    def as_label(self) -> str:
-        return '_'.join([f'{k}{v}' for k, v in vars(self).items()])
-
     def __str__(self):
         return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
 

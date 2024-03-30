@@ -33,9 +33,6 @@ class CollectiveRecoveryFeatureParam:
         return CollectiveRecoveryFeatureParam(
             default_window, default_collective_window)
 
-    def as_label(self):
-        return '_'.join([f'{k}{v}' for k, v in vars(self).items()])
-
     def __str__(self):
         return ', '.join([f'{k}: {str(v)}' for k, v in vars(self).items()])
 
