@@ -24,7 +24,7 @@ _timestamp_index_name = 'timestamp'
 def _get_filename(label: str, t_id: str, t_from: datetime.datetime, t_to: datetime.datetime) -> str:
     feature_dir = os.path.join(_cache_base_path, label)
     try:
-        os.mkdir(feature_dir)
+        os.makedirs(feature_dir, exist_ok=True)
     except FileExistsError:
         pass
 
@@ -55,8 +55,8 @@ def _split_df_by_day(df: pd.DataFrame) -> typing.List[pd.DataFrame]:
 
 def _cache_df_daily(df_daily: pd.DataFrame, label: str, t_id: str, overwrite=True):
     timestamps = df_daily.index.get_level_values(_timestamp_index_name).unique()
-    t_begin = datetime.datetime(year=timestamps[0].year, month=timestamps[0].month, day=timestamps[0].day, hour=0, minute=0, second=0, tzinfo=timestamps[0].tzinfo)
-    t_end = t_begin + datetime.timedelta(days=1)
+    t_begin = market_data.ingest.bq.cache._anchor_to_begin_of_day(timestamps[0])
+    t_end = market_data.ingest.bq.cache._anchor_to_begin_of_day(t_begin + _cache_interval)
 
     filename = _get_filename(label, t_id, t_begin, t_end)
     if os.path.exists(filename):
@@ -95,6 +95,7 @@ def cache_df(
         if skip_first_day and i == 0:
             continue
         _cache_df_daily(df_daily, label, t_id, overwrite=overwrite)
+        del df_daily
 
 
 def read_df(
