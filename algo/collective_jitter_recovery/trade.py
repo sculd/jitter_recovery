@@ -46,7 +46,7 @@ class TradeManager:
 
         ch_window30_min = min([tch[1] for tch in self.collective_chs])
         ch_min_window30_min = min([tch[1] for tch in self.collective_ch_mins])
-        return {'ch_window30_min': ch_window30_min}
+        return {'ch_window30_min_collective': ch_window30_min}
     
     def on_new_minutes(self, symbol, timestamp_epoch_seconds, timestamp_epochs_values):
         '''
@@ -56,8 +56,9 @@ class TradeManager:
         changes = algo.jitter_recovery.calculate.get_changes_1dim(np.array([tv[1] for tv in list(timestamp_epochs_values)[-w:]]))
         self.ch_per_symbol[symbol] = changes['ch']
         collective_features = self._get_collective_features(timestamp_epoch_seconds)
+        features = {**changes, **collective_features}
         in_position_before = self.status_per_symbol[symbol].in_position
-        self.status_per_symbol[symbol].update(collective_features, changes, self.trading_param)
+        self.status_per_symbol[symbol].update(features, self.trading_param)
         if self.status_per_symbol[symbol].in_position != in_position_before:
             direction = 1 if self.status_per_symbol[symbol].in_position == 1 else -1
             logging.info(f'in_position changes at {epoch_seconds_to_datetime(timestamp_epoch_seconds)} for {symbol} from {in_position_before} to {self.status_per_symbol[symbol].in_position} with changes: {changes}')

@@ -79,52 +79,42 @@ def _get_df_collective_feature(dfst_feature, feature_param: CollectiveRecoveryFe
     return df_collective_feature
 
 
-def get_dfst_trading(df, dfst_feature, trading_param):
+def get_dfst_trading(dfst_feature, trading_param):
     all_symbols = dfst_feature.index.get_level_values('symbol').unique()
     all_symbols = [s for s in all_symbols if 'USDT' in s]
 
-    df_collective_feature = dfst_feature.dropna().groupby('timestamp')[collective_feature_columns_no_rolling].median().resample('1min').asfreq().ffill()
-    df_collective_feature['ch_window30_min'] = df_collective_feature.ch.rolling(window=30).min() 
-    df_collective_feature['ch_window30_max'] = df_collective_feature.ch.rolling(window=30).max() 
-
-    dfst_trading = df.set_index(['symbol', 'timestamp'])
+    dfst_trading = dfst_feature.copy()
     for i, symbol in enumerate(all_symbols):
         if 'USDT' not in symbol: continue
         
         df_feature = dfst_feature.xs(symbol, level=0)
         
         if trading_param.collective_drop_recovery_trading_param  is not None:
-            l = len(df_feature[df_feature.ch_min <= trading_param.collective_drop_recovery_trading_param.drop_threshold * 0.9])
+            l = len(df_feature[df_feature.ch_min <= trading_param.collective_drop_recovery_trading_param.drop_threshold * 0.99])
         elif trading_param.collective_jump_recovery_trading_param  is not None:
-            l = len(df_feature[df_feature.ch_max >= trading_param.collective_jump_recovery_trading_param.jump_threshold * 0.9])
+            l = len(df_feature[df_feature.ch_max >= trading_param.collective_jump_recovery_trading_param.jump_threshold * 0.99])
         print(f'{i} symbol: {symbol} ({l}):(trading)')
-        df_trading = add_trading_columns(df_feature, df_collective_feature, trading_param)
-        
+        df_trading = add_trading_columns(df_feature, trading_param)
+
         for column in df_trading.columns:
+            if column in df_feature.columns:
+                continue
             dfst_trading.loc[symbol, column] = df_trading[column].values
         del df_trading
-    
-    del df_collective_feature
 
     return dfst_trading
 
 
-def add_trading_columns(df_feature, df_collective_feature, trading_param):
+def add_trading_columns(df_feature, trading_param):
     status = algo.collective_jitter_recovery.calculate.Status()
     trading_dict = defaultdict(list)
 
     for i in df_feature.index:
         features = df_feature.loc[i].to_dict()
-        if i in df_collective_feature.index:
-            collective_featuers = df_collective_feature.loc[i].to_dict()
-        else:
-            collective_featuers = {c: 0.0 for c in collective_feature_columns}
-        status.update(collective_featuers, features, trading_param)
+        status.update(features, trading_param)
 
         for k, v in {**features, **algo.collective_jitter_recovery.calculate.status_as_dict(status)}.items():
             trading_dict[k].append(v)
-        for k, v in collective_featuers.items():
-            trading_dict[f'{k}_collective'].append(v)
 
     df_feature_trading = pd.DataFrame(trading_dict, index=df_feature.index)
     df_feature_trading['position_changed'] = df_feature_trading.in_position.diff()

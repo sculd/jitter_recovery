@@ -38,7 +38,7 @@ def get_dfst_feature(df, feature_param, symbol_filter=None):
     return dfst_feature
 
 
-def get_dfst_trading(df, dfst_feature, trading_param):
+def get_dfst_trading(dfst_feature, trading_param):
     symbol_with_jumps = dfst_feature[
         (dfst_feature.ch_max > trading_param.jump_threshold)
         & (dfst_feature.ch_since_max < trading_param.drop_from_jump_threshold)
@@ -48,7 +48,7 @@ def get_dfst_trading(df, dfst_feature, trading_param):
 
     print(f'symbol_with_jumps: {len((symbol_with_jumps))}')
 
-    dfst_trading = df.set_index(['symbol', 'timestamp'])
+    dfst_trading = dfst_feature.copy()
     for i, symbol in enumerate(symbol_with_jumps):
         df_feature = dfst_feature.xs(symbol, level=0)
 
@@ -56,6 +56,8 @@ def get_dfst_trading(df, dfst_feature, trading_param):
         df_trading = add_trading_columns(df_feature, trading_param)
 
         for column in df_trading.columns:
+            if column in df_feature.columns:
+                continue
             dfst_trading.loc[symbol, column] = df_trading[column].values
 
         del df_feature

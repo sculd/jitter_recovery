@@ -153,7 +153,7 @@ class Status(BasicStatus):
         self.highest_since_enter = 0
         self.ch_from_highest_since_enter = 0
 
-    def update(self, collective_features, features, trading_param: CollectiveRecoveryTradingParam) -> None:
+    def update(self, features, trading_param: CollectiveRecoveryTradingParam) -> None:
         value = features['value']
         if self.in_position != 0:
             if value < self.lowest_since_enter:
@@ -191,8 +191,8 @@ class Status(BasicStatus):
         else:
             should_enter_long_position = False
             if trading_param.collective_drop_recovery_trading_param is not None:
-                should_enter_long_position = collective_features['ch_window30_min'] < trading_param.collective_drop_recovery_trading_param.collective_drop_threshold \
-                    and collective_features['ch_window30_min'] > trading_param.collective_drop_recovery_trading_param.collective_drop_lower_threshold \
+                should_enter_long_position = features['ch_window30_min_collective'] < trading_param.collective_drop_recovery_trading_param.collective_drop_threshold \
+                    and features['ch_window30_min_collective'] > trading_param.collective_drop_recovery_trading_param.collective_drop_lower_threshold \
                     and features['ch_min'] < trading_param.collective_drop_recovery_trading_param.drop_threshold \
                     and features['ch_since_min'] > trading_param.collective_drop_recovery_trading_param.jump_from_drop_threshold \
                     and features['distance_min_ch'] < 20 \
@@ -200,8 +200,8 @@ class Status(BasicStatus):
 
             should_enter_short_position = False
             if trading_param.collective_jump_recovery_trading_param is not None:
-                should_enter_short_position = collective_features['ch_window30_max'] > trading_param.collective_jump_recovery_trading_param.collective_jump_threshold \
-                    and collective_features['ch_window30_max'] < trading_param.collective_jump_recovery_trading_param.collective_jump_lower_threshold \
+                should_enter_short_position = features['ch_window30_min_collective'] > trading_param.collective_jump_recovery_trading_param.collective_jump_threshold \
+                    and features['ch_window30_min_collective'] < trading_param.collective_jump_recovery_trading_param.collective_jump_lower_threshold \
                     and features['ch_max'] > trading_param.collective_jump_recovery_trading_param.jump_threshold \
                     and features['ch_since_max'] < trading_param.collective_jump_recovery_trading_param.drop_from_jump_threshold \
                     and features['distance_max_ch'] < 20 \
