@@ -52,6 +52,7 @@ def get_dfst_feature(df, feature_param, symbol_filter=None):
     if symbol_filter is None:
         symbol_filter = lambda s: 'USDT' in s
     all_symbols = [s for s in all_symbols if symbol_filter(s)]
+    print(f'all_symbols: {len(all_symbols)}')
 
     dfst_feature = df.set_index(['symbol', 'timestamp'])
     for i, symbol in enumerate(all_symbols):
