@@ -118,7 +118,7 @@ def read_df(
         date_str_from=date_str_from,
         date_str_to=date_str_to,
     )
-    t_ranges = market_data.ingest.bq.cache._split_t_range(t_from, t_to)
+    t_ranges = market_data.ingest.bq.cache.split_t_range(t_from, t_to)
     df_concat = None
     for t_range in t_ranges:
         df_cache = _read_df_daily(label, t_id, t_range[0], t_range[-1])
@@ -154,7 +154,7 @@ def validate_df(
         date_str_from=date_str_from,
         date_str_to=date_str_to,
     )
-    t_ranges = market_data.ingest.bq.cache._split_t_range(t_from, t_to)
+    t_ranges = market_data.ingest.bq.cache.split_t_range(t_from, t_to)
     for t_range in t_ranges:
         t_from, t_to = t_range[0], t_range[-1]
         filename = _get_filename(label, t_id, t_from, t_to)
