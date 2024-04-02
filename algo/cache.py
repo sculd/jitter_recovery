@@ -70,7 +70,13 @@ def _cache_df_daily(df_daily: pd.DataFrame, label: str, t_id: str, overwrite=Tru
         df_daily.to_parquet(filename)
 
 
-def _read_df_daily(label: str, t_id: str, t_from: datetime.datetime, t_to: datetime.datetime) -> typing.Optional[pd.DataFrame]:
+def _read_df_daily(
+        label: str,
+        t_id: str,
+        t_from: datetime.datetime,
+        t_to: datetime.datetime,
+        columns: typing.List[str] = None,
+) -> typing.Optional[pd.DataFrame]:
     if not market_data.ingest.bq.cache._is_exact_cache_interval(t_from, t_to):
         logging.info(f"{t_from} to {t_to} do not match a full day thus will not read from the cache.")
         return None
@@ -78,7 +84,10 @@ def _read_df_daily(label: str, t_id: str, t_from: datetime.datetime, t_to: datet
     if not os.path.exists(filename):
         logging.info(f"{filename=} does not exist.")
         return None
-    return pd.read_parquet(filename)
+    if columns is None:
+        return pd.read_parquet(filename)
+    else:
+        return pd.read_parquet(filename)[columns]
 
 
 def cache_df(
@@ -108,6 +117,7 @@ def read_df(
         epoch_seconds_to: int = None,
         date_str_from: str = None,
         date_str_to: str = None,
+        columns: typing.List[str] = None,
         ) -> pd.DataFrame:
     t_id = market_data.ingest.bq.common.get_full_table_id(dataset_mode, export_mode)
     t_from, t_to = market_data.ingest.util.time.to_t(
@@ -121,7 +131,7 @@ def read_df(
     t_ranges = market_data.ingest.bq.cache.split_t_range(t_from, t_to)
     df_concat = None
     for t_range in t_ranges:
-        df_cache = _read_df_daily(label, t_id, t_range[0], t_range[-1])
+        df_cache = _read_df_daily(label, t_id, t_range[0], t_range[-1], columns=columns)
         if df_cache is None:
             logging.info(f"df_cache is None for {t_range}")
             continue
