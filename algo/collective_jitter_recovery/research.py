@@ -50,14 +50,20 @@ def get_trading_label_for_caching(trading_param: CollectiveDropRecoveryTradingPa
     return _get_param_label_for_caching(trading_param, _trading_label_prefix, label_suffix=label_suffix)
 
 
-def get_dfst_feature(df, feature_param: CollectiveRecoveryFeatureParam):
+def _get_usdt_symbol_filter():
+    return lambda s: 'USDT' in s
+
+
+def get_dfst_feature(df, feature_param: CollectiveRecoveryFeatureParam, symbol_filter=None):
     dfi = df.set_index(['timestamp', 'symbol'])
     all_symbols = df.symbol.unique()
-    all_symbols = [s for s in all_symbols if 'USDT' in s]
+    if symbol_filter is None:
+        symbol_filter = _get_usdt_symbol_filter()
+    all_symbols = [s for s in all_symbols if symbol_filter(s)]
+    print(f'all_symbols: {len(all_symbols)}')
       
     dfst_feature = df.set_index(['symbol', 'timestamp'])
     for i, symbol in enumerate(all_symbols):
-        if 'USDT' not in symbol: continue
         dfs = dfi.xs(symbol, level=1)
         
         df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, feature_param)
@@ -69,19 +75,20 @@ def get_dfst_feature(df, feature_param: CollectiveRecoveryFeatureParam):
             dfst_feature.loc[symbol, column] = df_feature[column].values
         del df_feature
 
-    dfst_with_collective_feature = _append_collective_feature(df, dfst_feature, feature_param)
+    dfst_with_collective_feature = _append_collective_feature(df, dfst_feature, feature_param, symbol_filter=symbol_filter)
     return dfst_with_collective_feature
 
 
-def _append_collective_feature(df, dfst_feature, feature_param: CollectiveRecoveryFeatureParam):
+def _append_collective_feature(df, dfst_feature, feature_param: CollectiveRecoveryFeatureParam, symbol_filter=None):
     all_symbols = dfst_feature.index.get_level_values('symbol').unique()
-    all_symbols = [s for s in all_symbols if 'USDT' in s]
+    if symbol_filter is None:
+        symbol_filter = _get_usdt_symbol_filter()
+    all_symbols = [s for s in all_symbols if symbol_filter(s)]
 
     df_collective_feature = _get_df_collective_feature(dfst_feature, feature_param)
 
     dfst_with_collective_feature = df.set_index(['symbol', 'timestamp'])
     for i, symbol in enumerate(all_symbols):
-        if 'USDT' not in symbol: continue
         print(f'{i} symbol: {symbol} (collective_feature)')
 
         df_feature = dfst_feature.xs(symbol, level=0)
@@ -113,12 +120,9 @@ def _get_df_collective_feature(dfst_feature, feature_param: CollectiveRecoveryFe
 
 def get_dfst_trading(dfst_feature, trading_param):
     all_symbols = dfst_feature.index.get_level_values('symbol').unique()
-    all_symbols = [s for s in all_symbols if 'USDT' in s]
 
     dfst_trading = dfst_feature.copy()
     for i, symbol in enumerate(all_symbols):
-        if 'USDT' not in symbol: continue
-        
         df_feature = dfst_feature.xs(symbol, level=0)
 
         l = 0
