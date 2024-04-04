@@ -63,6 +63,8 @@ def get_dfst_feature(df, feature_param: CollectiveRecoveryFeatureParam, symbol_f
     print(f'all_symbols: {len(all_symbols)}')
       
     dfst_feature = df.set_index(['symbol', 'timestamp'])
+    if len(all_symbols) == 0:
+        return dfst_feature
     for i, symbol in enumerate(all_symbols):
         dfs = dfi.xs(symbol, level=1)
         

@@ -54,6 +54,9 @@ def _split_df_by_day(df: pd.DataFrame) -> typing.List[pd.DataFrame]:
 
 
 def _cache_df_daily(df_daily: pd.DataFrame, label: str, t_id: str, overwrite=True):
+    if len(df_daily) == 0:
+        logging.info(f"df_daily is empty thus will be skipped.")
+        return
     timestamps = df_daily.index.get_level_values(_timestamp_index_name).unique()
     t_begin = market_data.ingest.bq.cache._anchor_to_begin_of_day(timestamps[0])
     t_end = market_data.ingest.bq.cache._anchor_to_begin_of_day(t_begin + _cache_interval)
@@ -98,6 +101,9 @@ def cache_df(
         overwrite = False,
         skip_first_day = True,
 ) -> None:
+    if len(df) == 0:
+        logging.info(f"df is empty for {label} thus will be skipped.")
+        return
     t_id = market_data.ingest.bq.common.get_full_table_id(dataset_mode, export_mode)
     df_dailys = _split_df_by_day(df)
     for i, df_daily in enumerate(df_dailys):
