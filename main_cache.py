@@ -184,74 +184,26 @@ def cache_trading(
     do_cache(trading_params, feature_labels, trading_labels, algo.collective_jitter_recovery.research.get_dfst_trading)
 
 
-def run_okx():
-    dataset_mode = market_data.ingest.bq.common.DATASET_MODE.OKX
-    export_mode = market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE
+def cache_all(
+        date_str_from: str,
+        date_str_to: str,
+        dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
+        export_mode: market_data.ingest.bq.common.EXPORT_MODE,
+):
     aggregation_mode = market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST
-    '''
+    #'''
     market_data.ingest.bq.cache.fetch_and_cache(
-        date_str_from='2024-03-30',
-        date_str_to='2024-04-01',
+        date_str_from=date_str_from,
+        date_str_to=date_str_to,
         dataset_mode=dataset_mode,
         export_mode=export_mode,
         aggregation_mode=aggregation_mode,
     )
+    #'''
     #'''
     market_data.ingest.bq.validate.verify_data_cache(
-        date_str_from='2024-01-01',
-        date_str_to='2024-04-02',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-        aggregation_mode=aggregation_mode,
-    )
-    verify_features_cache(
-        date_str_from='2024-01-02',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-    )
-    verify_trading_cache(
-        date_str_from='2024-01-02',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-    )
-
-    '''
-    cache_features(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-    )
-    #'''
-    '''
-    cache_trading(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-    )
-    #'''
-
-
-def run_cex():
-    dataset_mode = market_data.ingest.bq.common.DATASET_MODE.CEX
-    export_mode = market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE
-    aggregation_mode = market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST
-    '''
-    market_data.ingest.bq.cache.fetch_and_cache(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-        aggregation_mode=aggregation_mode,
-    )
-    #'''
-    '''
-    market_data.ingest.bq.validate.verify_data_cache(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
+        date_str_from=date_str_from,
+        date_str_to=date_str_to,
         dataset_mode=dataset_mode,
         export_mode=export_mode,
         aggregation_mode=aggregation_mode,
@@ -259,86 +211,87 @@ def run_cex():
     #'''
     #'''
     cache_features(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
+        date_str_from=date_str_from,
+        date_str_to=date_str_to,
         dataset_mode=dataset_mode,
         export_mode=export_mode,
-        symbol_filter=lambda s: s.endswith('-USD')
+        symbol_filter=lambda s: s.endswith('USD')
     )
     #'''
     #'''
     verify_features_cache(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
+        date_str_from=date_str_from,
+        date_str_to=date_str_to,
         dataset_mode=dataset_mode,
         export_mode=export_mode,
     )
     #'''
-    '''
+    #'''
     cache_trading(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
+        date_str_from=date_str_from,
+        date_str_to=date_str_to,
         dataset_mode=dataset_mode,
         export_mode=export_mode,
     )
     verify_trading_cache(
-        date_str_from='2024-01-02',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-    )
-    '''
-
-
-def run_bithumb():
-    dataset_mode = market_data.ingest.bq.common.DATASET_MODE.BITHUMB
-    export_mode = market_data.ingest.bq.common.EXPORT_MODE.ORDERBOOK_LEVEL1
-    aggregation_mode = market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST
-    '''
-    market_data.ingest.bq.cache.fetch_and_cache(
-        date_str_from='2024-03-21',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-        aggregation_mode=aggregation_mode,
-    )
-    #'''
-    market_data.ingest.bq.validate.verify_data_cache(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-        aggregation_mode=aggregation_mode,
-    )
-    cache_features(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-    )
-    '''
-    verify_features_cache(
-        date_str_from='2024-01-02',
-        date_str_to='2024-03-31',
+        date_str_from=date_str_from,
+        date_str_to=date_str_to,
         dataset_mode=dataset_mode,
         export_mode=export_mode,
     )
     #'''
-    '''
-    cache_trading(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
+
+
+def run_okx(
+        date_str_from: str,
+        date_str_to: str,
+        ):
+    cache_all(
+        date_str_from=date_str_from,
+        date_str_to=date_str_to,
+        dataset_mode = market_data.ingest.bq.common.DATASET_MODE.OKX,
+        export_mode = market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
     )
-    verify_trading_cache(
-        date_str_from='2024-01-02',
-        date_str_to='2024-03-31',
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
+
+
+def run_cex(
+        date_str_from: str,
+        date_str_to: str,
+):
+    cache_all(
+        date_str_from=date_str_from,
+        date_str_to=date_str_to,
+        dataset_mode = market_data.ingest.bq.common.DATASET_MODE.CEX,
+        export_mode = market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
     )
-    '''
+
+
+def run_gemini(
+        date_str_from: str,
+        date_str_to: str,
+):
+    cache_all(
+        date_str_from=date_str_from,
+        date_str_to=date_str_to,
+        dataset_mode = market_data.ingest.bq.common.DATASET_MODE.GEMINI,
+        export_mode = market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+    )
+
+
+def run_bithumb(
+        date_str_from: str,
+        date_str_to: str,
+):
+    cache_all(
+        date_str_from=date_str_from,
+        date_str_to=date_str_to,
+        dataset_mode = market_data.ingest.bq.common.DATASET_MODE.BITHUMB,
+        export_mode = market_data.ingest.bq.common.EXPORT_MODE.ORDERBOOK_LEVEL1,
+    )
 
 
 if __name__ == '__main__':
-    run_cex()
+    run_cex(
+        date_str_from='2024-03-20',
+        date_str_to='2024-03-31',
+    )
