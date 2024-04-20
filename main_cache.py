@@ -189,109 +189,107 @@ def cache_all(
         date_str_to: str,
         dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
         export_mode: market_data.ingest.bq.common.EXPORT_MODE,
+        if_cache_features=False,
+        if_verify_features=False,
+        if_cache_trading=False,
+        if_verify_trading=False,
 ):
     aggregation_mode = market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST
     #'''
     market_data.ingest.bq.cache.fetch_and_cache(
-        date_str_from=date_str_from,
-        date_str_to=date_str_to,
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
+        date_str_from=date_str_from, date_str_to=date_str_to,
+        dataset_mode=dataset_mode, export_mode=export_mode,
         aggregation_mode=aggregation_mode,
     )
     #'''
     #'''
     market_data.ingest.bq.validate.verify_data_cache(
-        date_str_from=date_str_from,
-        date_str_to=date_str_to,
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
+        date_str_from=date_str_from, date_str_to=date_str_to,
+        dataset_mode=dataset_mode, export_mode=export_mode,
         aggregation_mode=aggregation_mode,
     )
     #'''
-    #'''
-    cache_features(
-        date_str_from=date_str_from,
-        date_str_to=date_str_to,
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-        symbol_filter=lambda s: s.endswith('USD')
-    )
-    #'''
-    #'''
-    verify_features_cache(
-        date_str_from=date_str_from,
-        date_str_to=date_str_to,
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-    )
-    #'''
-    #'''
-    cache_trading(
-        date_str_from=date_str_from,
-        date_str_to=date_str_to,
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-    )
-    verify_trading_cache(
-        date_str_from=date_str_from,
-        date_str_to=date_str_to,
-        dataset_mode=dataset_mode,
-        export_mode=export_mode,
-    )
-    #'''
+
+    if if_cache_features:
+        cache_features(
+            date_str_from=date_str_from, date_str_to=date_str_to,
+            dataset_mode=dataset_mode, export_mode=export_mode,
+            symbol_filter=lambda s: s.endswith('USD')
+        )
+
+    if if_verify_features:
+        verify_features_cache(
+            date_str_from=date_str_from, date_str_to=date_str_to,
+            dataset_mode=dataset_mode, export_mode=export_mode,
+        )
+
+    if if_cache_trading:
+        cache_trading(
+            date_str_from=date_str_from, date_str_to=date_str_to,
+            dataset_mode=dataset_mode, export_mode=export_mode,
+        )
+
+    if if_verify_trading:
+        verify_trading_cache(
+            date_str_from=date_str_from, date_str_to=date_str_to,
+            dataset_mode=dataset_mode, export_mode=export_mode,
+        )
 
 
-def run_okx(
-        date_str_from: str,
-        date_str_to: str,
-        ):
+def run_okx(date_str_from: str, date_str_to: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
     cache_all(
-        date_str_from=date_str_from,
-        date_str_to=date_str_to,
-        dataset_mode = market_data.ingest.bq.common.DATASET_MODE.OKX,
-        export_mode = market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        date_str_from=date_str_from, date_str_to=date_str_to,
+        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.OKX,
+        export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
     )
 
 
-def run_cex(
-        date_str_from: str,
-        date_str_to: str,
-):
+def run_binance(date_str_from: str, date_str_to: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
     cache_all(
-        date_str_from=date_str_from,
-        date_str_to=date_str_to,
-        dataset_mode = market_data.ingest.bq.common.DATASET_MODE.CEX,
-        export_mode = market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        date_str_from=date_str_from, date_str_to=date_str_to,
+        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.BINANCE,
+        export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
     )
 
 
-def run_gemini(
-        date_str_from: str,
-        date_str_to: str,
-):
+def run_cex(date_str_from: str, date_str_to: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
     cache_all(
-        date_str_from=date_str_from,
-        date_str_to=date_str_to,
-        dataset_mode = market_data.ingest.bq.common.DATASET_MODE.GEMINI,
-        export_mode = market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        date_str_from=date_str_from, date_str_to=date_str_to,
+        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.CEX,
+        export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
     )
 
 
-def run_bithumb(
-        date_str_from: str,
-        date_str_to: str,
-):
+def run_gemini(date_str_from: str, date_str_to: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
     cache_all(
-        date_str_from=date_str_from,
-        date_str_to=date_str_to,
-        dataset_mode = market_data.ingest.bq.common.DATASET_MODE.BITHUMB,
-        export_mode = market_data.ingest.bq.common.EXPORT_MODE.ORDERBOOK_LEVEL1,
+        date_str_from=date_str_from, date_str_to=date_str_to,
+        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.GEMINI,
+        export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
+    )
+
+
+def run_bithumb(date_str_from: str, date_str_to: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
+    cache_all(
+        date_str_from=date_str_from, date_str_to=date_str_to,
+        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.BITHUMB,
+        export_mode=market_data.ingest.bq.common.EXPORT_MODE.ORDERBOOK_LEVEL1,
+        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
     )
 
 
 if __name__ == '__main__':
-    run_cex(
-        date_str_from='2024-03-20',
-        date_str_to='2024-03-31',
-    )
+    date_str_from='2024-03-30'
+    date_str_to='2024-04-12'
+    if_cache_features=False
+    if_verify_features = True
+    if_cache_trading=False
+    if_verify_trading = True
+    #run_okx(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    #run_binance(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    #run_cex(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    #run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    run_bithumb(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
