@@ -76,12 +76,15 @@ def get_dfst_feature(df, feature_param, symbol_filter=None):
 
 
 def get_dfst_trading(dfst_feature, trading_param):
-    symbol_with_jumps = dfst_feature[
-        (dfst_feature.ch_max > trading_param.jump_threshold)
-        & (dfst_feature.ch_since_max < trading_param.drop_from_jump_threshold)
-        & (dfst_feature.distance_max_ch < 10)
-        & (dfst_feature.distance_max_ch > 2)
-        ].index.get_level_values('symbol').unique().values
+    if 'ch_max' not in dfst_feature.columns:
+        symbol_with_jumps = []
+    else:
+        symbol_with_jumps = dfst_feature[
+            (dfst_feature.ch_max > trading_param.jump_threshold)
+            & (dfst_feature.ch_since_max < trading_param.drop_from_jump_threshold)
+            & (dfst_feature.distance_max_ch < 10)
+            & (dfst_feature.distance_max_ch > 2)
+            ].index.get_level_values('symbol').unique().values
 
     print(f'symbol_with_jumps: {len((symbol_with_jumps))}')
 

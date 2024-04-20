@@ -127,6 +127,9 @@ def get_dfst_trading(dfst_feature, trading_param):
     for i, symbol in enumerate(all_symbols):
         df_feature = dfst_feature.xs(symbol, level=0)
 
+        if 'ch_min' not in df_feature.columns:
+            continue
+
         l = 0
         if trading_param.collective_drop_recovery_trading_param  is not None:
             l = len(df_feature[df_feature.ch_min <= trading_param.collective_drop_recovery_trading_param.drop_threshold * 0.99])
