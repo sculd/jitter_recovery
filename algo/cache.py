@@ -87,10 +87,15 @@ def _read_df_daily(
     if not os.path.exists(filename):
         logging.info(f"{filename=} does not exist.")
         return None
+    df = pd.read_parquet(filename)
+    if len(df) == 0:
+        return None
+
+    columns = [c for c in columns if c in df.columns]
     if columns is None:
-        return pd.read_parquet(filename)
+        return df
     else:
-        return pd.read_parquet(filename)[columns]
+        return df[columns]
 
 
 def cache_df(
