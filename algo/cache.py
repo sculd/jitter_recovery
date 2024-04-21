@@ -91,10 +91,10 @@ def _read_df_daily(
     if len(df) == 0:
         return None
 
-    columns = [c for c in columns if c in df.columns]
     if columns is None:
         return df
     else:
+        columns = [c for c in columns if c in df.columns]
         return df[columns]
 
 
