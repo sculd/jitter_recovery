@@ -125,9 +125,9 @@ def get_changes_1dim(values):
         }
 
 
-def get_feature_df(dfs, feature_param):
+def get_feature_df(dfs, feature_param, value_column='close'):
     window = feature_param.window
-    return pd.DataFrame([get_changes_1dim(np.array([v[0] for v in df_.to_numpy(dtype=np.float64)], dtype=np.float64)) for df_ in dfs[['close']].rolling(window, min_periods=window)], index=dfs.index)
+    return pd.DataFrame([get_changes_1dim(np.array([v[0] for v in df_.to_numpy(dtype=np.float64)], dtype=np.float64)) for df_ in dfs[[value_column]].rolling(window, min_periods=window)], index=dfs.index)
 
 class Status:
     def __init__(self):

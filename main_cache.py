@@ -71,7 +71,7 @@ def cache_features(
     date_str_to: str,
     dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
     export_mode: market_data.ingest.bq.common.EXPORT_MODE,
-    symbol_filter=None,
+    symbol_filter=None, value_column='close',
 ) -> None:
     df = market_data.ingest.bq.cache.read_from_cache(
         dataset_mode,
@@ -82,7 +82,7 @@ def cache_features(
     def do_cache(feature_params, labels, get_dfst_feature_func):
         for feature_param, label in zip(feature_params, labels):
             logging.info(f"for {label}")
-            dfst_feature = get_dfst_feature_func(df, feature_param, symbol_filter=symbol_filter)
+            dfst_feature = get_dfst_feature_func(df, feature_param, symbol_filter=symbol_filter, value_column=value_column)
             algo.cache.cache_df(
                 dfst_feature,
                 label=label,
@@ -185,14 +185,16 @@ def cache_trading(
 
 
 def cache_all(
-        date_str_from: str,
-        date_str_to: str,
-        dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
-        export_mode: market_data.ingest.bq.common.EXPORT_MODE,
-        if_cache_features=False,
-        if_verify_features=False,
-        if_cache_trading=False,
-        if_verify_trading=False,
+    date_str_from: str,
+    date_str_to: str,
+    dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
+    export_mode: market_data.ingest.bq.common.EXPORT_MODE,
+    if_cache_features=False,
+    if_verify_features=False,
+    if_cache_trading=False,
+    if_verify_trading=False,
+    symbol_filter=lambda s: s.endswith('USD'),
+    value_column='close',
 ):
     aggregation_mode = market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST
     #'''
@@ -214,7 +216,7 @@ def cache_all(
         cache_features(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
-            symbol_filter=lambda s: s.endswith('USD')
+            symbol_filter=symbol_filter, value_column=value_column,
         )
 
     if if_verify_features:
@@ -242,6 +244,7 @@ def run_okx(date_str_from: str, date_str_to: str, if_cache_features=False, if_ca
         dataset_mode=market_data.ingest.bq.common.DATASET_MODE.OKX,
         export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
         if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
+        symbol_filter=lambda s: s.endswith('-USDT-SWAP')
     )
 
 
@@ -278,11 +281,12 @@ def run_bithumb(date_str_from: str, date_str_to: str, if_cache_features=False, i
         dataset_mode=market_data.ingest.bq.common.DATASET_MODE.BITHUMB,
         export_mode=market_data.ingest.bq.common.EXPORT_MODE.ORDERBOOK_LEVEL1,
         if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
+        symbol_filter=lambda s: s.endswith('-KRW'), value_column='price_ask',
     )
 
 
 if __name__ == '__main__':
-    date_str_from='2024-03-30'
+    date_str_from='2024-03-21'
     date_str_to='2024-04-12'
     if_cache_features=False
     if_verify_features = True

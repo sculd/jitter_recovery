@@ -50,7 +50,7 @@ def _get_usdt_symbol_filter():
     return lambda s: 'USDT' in s
 
 
-def get_dfst_feature(df, feature_param, symbol_filter=None):
+def get_dfst_feature(df, feature_param, symbol_filter=None, value_column='close'):
     dfi = df.set_index(['timestamp', 'symbol'])
     all_symbols = df.symbol.unique()
     if symbol_filter is None:
@@ -62,7 +62,7 @@ def get_dfst_feature(df, feature_param, symbol_filter=None):
     for i, symbol in enumerate(all_symbols):
         dfs = dfi.xs(symbol, level=1)
         
-        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, feature_param)
+        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, feature_param, value_column=value_column)
         del dfs
         
         print(f'{i} symbol: {symbol} (feature)')
