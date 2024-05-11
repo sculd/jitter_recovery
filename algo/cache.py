@@ -12,7 +12,7 @@ import market_data.ingest.util.time
 _cache_interval = datetime.timedelta(days=1)
 _full_day_check_grace_period = datetime.timedelta(minutes=10)
 
-_cache_base_path = os.path.expanduser('~/feature_data')
+_cache_base_path = os.path.expanduser('~/algo_data')
 try:
     os.mkdir(_cache_base_path)
 except FileExistsError:

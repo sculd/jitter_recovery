@@ -44,10 +44,12 @@ def _get_param_label_for_caching(param, label_prefix, label_suffix=None) -> str:
 
 
 def get_feature_label_for_caching(feature_param: algo.jitter_recovery.calculate.JitterRecoveryFeatureParam, label_suffix=None) -> str:
-    return _get_param_label_for_caching(feature_param, _feature_label_prefix, label_suffix=label_suffix)
+    r = _get_param_label_for_caching(feature_param, _feature_label_prefix, label_suffix=label_suffix)
+    return f'feature/{r}'
 
 def get_trading_label_for_caching(trading_param: CollectiveDropRecoveryTradingParam, label_suffix=None) -> str:
-    return _get_param_label_for_caching(trading_param, _trading_label_prefix, label_suffix=label_suffix)
+    r = _get_param_label_for_caching(trading_param, _trading_label_prefix, label_suffix=label_suffix)
+    return f'trading/{r}'
 
 
 def _get_usdt_symbol_filter():
