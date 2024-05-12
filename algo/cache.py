@@ -7,16 +7,22 @@ import os
 import market_data.ingest.bq.cache
 import market_data.ingest.bq.common
 import market_data.ingest.util.time
+from google.cloud import storage
 
 # the cache will be stored per day.
 _cache_interval = datetime.timedelta(days=1)
 _full_day_check_grace_period = datetime.timedelta(minutes=10)
 
-_cache_base_path = os.path.expanduser('~/algo_data')
+_cache_base_path = os.path.expanduser(f'~/algo_cache')
 try:
     os.mkdir(_cache_base_path)
 except FileExistsError:
     pass
+
+
+_storage_client = storage.Client()
+_gcs_bucket_name = "algo_cache"
+_gcs_bucket = _storage_client.bucket(_gcs_bucket_name)
 
 _timestamp_index_name = 'timestamp'
 
@@ -30,7 +36,12 @@ def _get_filename(label: str, t_id: str, t_from: datetime.datetime, t_to: dateti
 
     t_str_from = t_from.strftime("%Y-%m-%dT%H:%M:%S%z")
     t_str_to = t_to.strftime("%Y-%m-%dT%H:%M:%S%z")
-    return os.path.join(feature_dir, f"{t_id}_{t_str_from}_{t_str_to}.parquet")
+    return os.path.join(feature_dir, f"{t_id}/{t_str_from}_{t_str_to}.parquet")
+
+def _get_gcsblobname(label: str, t_id: str, t_from: datetime.datetime, t_to: datetime.datetime) -> str:
+    t_str_from = t_from.strftime("%Y-%m-%dT%H:%M:%S%z")
+    t_str_to = t_to.strftime("%Y-%m-%dT%H:%M:%S%z")
+    return os.path.join(label, f"{t_id}/{t_str_from}_{t_str_to}.parquet")
 
 def _timestamp_covers_full_day(first_t: datetime.datetime, last_t: datetime.datetime, grace_period: datetime.timedelta=_full_day_check_grace_period) -> bool:
     def _is_t_begin_of_day(t) -> bool:
@@ -53,6 +64,25 @@ def _split_df_by_day(df: pd.DataFrame) -> typing.List[pd.DataFrame]:
     return dfs
 
 
+def _upload_file_to_public_gcs_bucket(local_filename, gcs_filename, rewrite=False) -> None:
+    # uoload the file to gcs
+    if storage.Blob(bucket=_gcs_bucket, name=gcs_filename).exists(_storage_client):
+        if rewrite:
+            blob = _gcs_bucket.blob(gcs_filename)
+            blob.delete(if_generation_match=None)
+        else:
+            print(f'{gcs_filename} already present in the bucket {_gcs_bucket_name} thus not proceeding further for {property}')
+            return
+
+    blob = _gcs_bucket.blob(gcs_filename)
+    generation_match_precondition = 0
+    blob.upload_from_filename(local_filename, if_generation_match=generation_match_precondition)
+
+    print(
+        f"File {local_filename} uploaded to {_gcs_bucket_name}/{gcs_filename}."
+    )
+
+
 def _cache_df_daily(df_daily: pd.DataFrame, label: str, t_id: str, overwrite=True):
     if len(df_daily) == 0:
         logging.info(f"df_daily is empty thus will be skipped.")
@@ -69,9 +99,37 @@ def _cache_df_daily(df_daily: pd.DataFrame, label: str, t_id: str, overwrite=Tru
             df_daily.to_parquet(filename)
         else:
             logging.info(f"and would not write it.")
+
+        blob_name = _get_gcsblobname(label, t_id, t_begin, t_end)
+        _upload_file_to_public_gcs_bucket(filename, blob_name, rewrite=overwrite)
+
     else:
         df_daily.to_parquet(filename)
 
+
+def _download_gcs_blob(source_blob_name, destination_file_name):
+    """Downloads a blob from the bucket."""
+    # The ID of your GCS bucket
+    # bucket_name = "your-bucket-name"
+
+    # The ID of your GCS object
+    # source_blob_name = "storage-object-name"
+
+    # The path to which the file should be downloaded
+    # destination_file_name = "local/path/to/file"
+
+    bucket = _storage_client.bucket(_gcs_bucket_name)
+
+    # Construct a client side representation of a blob.
+    # Note `Bucket.blob` differs from `Bucket.get_blob` as it doesn't retrieve
+    # any content from Google Cloud Storage. As we don't need additional data,
+    # using `Bucket.blob` is preferred here.
+    blob = bucket.blob(source_blob_name)
+    blob.download_to_filename(destination_file_name)
+
+    print(
+        f"Downloaded storage object {source_blob_name} from bucket {_gcs_bucket_name} to local file {destination_file_name}."
+    )
 
 def _read_df_daily(
         label: str,
@@ -85,7 +143,11 @@ def _read_df_daily(
         return None
     filename = _get_filename(label, t_id, t_from, t_to)
     if not os.path.exists(filename):
-        logging.info(f"{filename=} does not exist.")
+        blob_name = _get_gcsblobname(label, t_id, t_from, t_to)
+        blob_exist = storage.Blob(bucket=_gcs_bucket_name, name=blob_name).exists(_storage_client)
+        logging.info(f"{filename=} does not exist in local cache. For gcs, {blob_exist=}.")
+        if blob_exist:
+            _download_gcs_blob(blob_name, filename)
         return None
     df = pd.read_parquet(filename)
     if len(df) == 0:
@@ -180,4 +242,9 @@ def validate_df(
         t_from, t_to = t_range[0], t_range[-1]
         filename = _get_filename(label, t_id, t_from, t_to)
         if not os.path.exists(filename):
-            logging.info(f"{filename=} does not exist.")
+            blob_name = _get_gcsblobname(label, t_id, t_from, t_to)
+            blob_exist = storage.Blob(bucket=_gcs_bucket, name=blob_name).exists(_storage_client)
+            logging.info(f"{filename=} does not exist in local cache. For gcs, {blob_exist=}.")
+            if blob_exist:
+                _download_gcs_blob(blob_name, filename)
+                print(f'after download exist: {os.path.exists(filename)} for {filename}')
