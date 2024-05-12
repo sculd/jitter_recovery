@@ -29,14 +29,16 @@ _timestamp_index_name = 'timestamp'
 
 def _get_filename(label: str, t_id: str, t_from: datetime.datetime, t_to: datetime.datetime) -> str:
     feature_dir = os.path.join(_cache_base_path, label)
+    t_str_from = t_from.strftime("%Y-%m-%dT%H:%M:%S%z")
+    t_str_to = t_to.strftime("%Y-%m-%dT%H:%M:%S%z")
+    r = os.path.join(feature_dir, f"{t_id}/{t_str_from}_{t_str_to}.parquet")
+    dir = os.path.dirname(r)
     try:
-        os.makedirs(feature_dir, exist_ok=True)
+        os.makedirs(dir, exist_ok=True)
     except FileExistsError:
         pass
 
-    t_str_from = t_from.strftime("%Y-%m-%dT%H:%M:%S%z")
-    t_str_to = t_to.strftime("%Y-%m-%dT%H:%M:%S%z")
-    return os.path.join(feature_dir, f"{t_id}/{t_str_from}_{t_str_to}.parquet")
+    return r
 
 def _get_gcsblobname(label: str, t_id: str, t_from: datetime.datetime, t_to: datetime.datetime) -> str:
     t_str_from = t_from.strftime("%Y-%m-%dT%H:%M:%S%z")
