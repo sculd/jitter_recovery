@@ -146,7 +146,7 @@ def _read_df_daily(
     filename = _get_filename(label, t_id, t_from, t_to)
     if not os.path.exists(filename):
         blob_name = _get_gcsblobname(label, t_id, t_from, t_to)
-        blob_exist = storage.Blob(bucket=_gcs_bucket_name, name=blob_name).exists(_storage_client)
+        blob_exist = storage.Blob(bucket=_gcs_bucket, name=blob_name).exists(_storage_client)
         logging.info(f"{filename=} does not exist in local cache. For gcs, {blob_exist=}.")
         if blob_exist:
             _download_gcs_blob(blob_name, filename)
