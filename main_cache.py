@@ -291,13 +291,13 @@ def run_bithumb(date_str_from: str, date_str_to: str, if_cache_features=False, i
 
 
 if __name__ == '__main__':
-    date_str_from='2024-03-20'
-    date_str_to='2024-03-21'
-    if_cache_features=True
-    if_verify_features = True
-    if_cache_trading=True
-    if_verify_trading = True
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    date_str_from='2024-04-10'
+    date_str_to='2024-04-30'
+    if_cache_features = False
+    if_verify_features = False
+    if_cache_trading = True
+    if_verify_trading = False
+    #run_okx(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     run_binance(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     run_cex(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
