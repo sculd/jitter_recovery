@@ -102,12 +102,11 @@ def _cache_df_daily(df_daily: pd.DataFrame, label: str, t_id: str, overwrite=Tru
         else:
             logging.info(f"and would not write it.")
 
-        blob_name = _get_gcsblobname(label, t_id, t_begin, t_end)
-        _upload_file_to_public_gcs_bucket(filename, blob_name, rewrite=overwrite)
-
     else:
         df_daily.to_parquet(filename)
 
+    blob_name = _get_gcsblobname(label, t_id, t_begin, t_end)
+    _upload_file_to_public_gcs_bucket(filename, blob_name, rewrite=overwrite)
 
 def _download_gcs_blob(source_blob_name, destination_file_name):
     """Downloads a blob from the bucket."""
