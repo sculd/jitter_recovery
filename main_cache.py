@@ -21,6 +21,7 @@ import market_data.ingest.bq.cache
 import market_data.ingest.bq.validate
 import algo.jitter_common.calculate
 import algo.jitter_recovery.calculate
+import algo.jitter_following.calculate
 import algo.jitter_common.research
 import algo.jitter_recovery.research
 import algo.collective_jitter_recovery.calculate
@@ -119,6 +120,30 @@ def _get_trading_param_labels():
     return params, feature_labels, trading_labels
 
 
+def _get_jitter_following_trading_param_labels():
+    params = [
+        algo.jitter_following.calculate.JitterFollowingTradingParam(
+            algo.jitter_common.calculate.JitterFeatureParam(30),
+            0.15, -0.02),
+        algo.jitter_following.calculate.JitterFollowingTradingParam(
+            algo.jitter_common.calculate.JitterFeatureParam(30),
+            0.20, -0.02),
+        algo.jitter_following.calculate.JitterFollowingTradingParam(
+            algo.jitter_common.calculate.JitterFeatureParam(30),
+            0.15, -0.01),
+        algo.jitter_following.calculate.JitterFollowingTradingParam(
+            algo.jitter_common.calculate.JitterFeatureParam(30),
+            0.20, -0.01),
+    ]
+    feature_labels = [
+        algo.jitter_common.research.get_feature_label_for_caching(param.feature_param) for param in params
+    ]
+    trading_labels = [
+        algo.jitter_recovery.research.get_trading_label_for_caching(param) for param in params
+    ]
+    return params, feature_labels, trading_labels
+
+
 def _get_collective_trading_param_labels():
     collective_params = [
         algo.collective_jitter_recovery.calculate.CollectiveRecoveryTradingParam(
@@ -144,8 +169,9 @@ def verify_trading_cache(
     export_mode: market_data.ingest.bq.common.EXPORT_MODE,
 ) -> None:
     _, _, labels = _get_trading_param_labels()
+    _, _, jitter_following_labels = _get_jitter_following_trading_param_labels()
     _, _, collective_labels = _get_collective_trading_param_labels()
-    for label in labels + collective_labels:
+    for label in labels + jitter_following_labels + collective_labels:
         logging.info(f"verify trading cache for trading {label}")
         algo.cache.validate_df(
             label=label,
@@ -185,6 +211,9 @@ def cache_trading(
             del dfst_trading
 
     trading_params, feature_labels, trading_labels = _get_trading_param_labels()
+    do_cache(trading_params, feature_labels, trading_labels, algo.jitter_recovery.research.get_dfst_trading)
+
+    trading_params, feature_labels, trading_labels = _get_jitter_following_trading_param_labels()
     do_cache(trading_params, feature_labels, trading_labels, algo.jitter_recovery.research.get_dfst_trading)
 
     trading_params, feature_labels, trading_labels = _get_collective_trading_param_labels()
