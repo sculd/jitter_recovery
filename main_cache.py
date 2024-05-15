@@ -24,6 +24,7 @@ import algo.jitter_recovery.calculate
 import algo.jitter_following.calculate
 import algo.jitter_common.research
 import algo.jitter_recovery.research
+import algo.jitter_following.research
 import algo.collective_jitter_recovery.calculate
 import algo.collective_jitter_recovery.research
 import algo.cache
@@ -211,13 +212,13 @@ def cache_trading(
             del dfst_trading
 
     trading_params, feature_labels, trading_labels = _get_trading_param_labels()
-    do_cache(trading_params, feature_labels, trading_labels, algo.jitter_recovery.research.get_dfst_trading)
+    #do_cache(trading_params, feature_labels, trading_labels, algo.jitter_recovery.research.get_dfst_trading)
 
     trading_params, feature_labels, trading_labels = _get_jitter_following_trading_param_labels()
-    do_cache(trading_params, feature_labels, trading_labels, algo.jitter_recovery.research.get_dfst_trading)
+    do_cache(trading_params, feature_labels, trading_labels, algo.jitter_following.research.get_dfst_trading)
 
     trading_params, feature_labels, trading_labels = _get_collective_trading_param_labels()
-    do_cache(trading_params, feature_labels, trading_labels, algo.collective_jitter_recovery.research.get_dfst_trading)
+    #do_cache(trading_params, feature_labels, trading_labels, algo.collective_jitter_recovery.research.get_dfst_trading)
 
 
 def cache_all(
@@ -322,14 +323,14 @@ def run_bithumb(date_str_from: str, date_str_to: str, if_cache_features=False, i
 
 
 if __name__ == '__main__':
-    date_str_from='2024-04-10'
-    date_str_to='2024-04-30'
+    date_str_from='2024-02-14'
+    date_str_to='2024-05-10'
     if_cache_features = False
     if_verify_features = False
     if_cache_trading = True
     if_verify_trading = False
-    #run_okx(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-    run_binance(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-    run_cex(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-    run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-    run_bithumb(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    #run_binance(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    #run_cex(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    #run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    #run_bithumb(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
