@@ -19,7 +19,9 @@ logging.basicConfig(
 import market_data.ingest.bq.common
 import market_data.ingest.bq.cache
 import market_data.ingest.bq.validate
+import algo.jitter_common.calculate
 import algo.jitter_recovery.calculate
+import algo.jitter_common.research
 import algo.jitter_recovery.research
 import algo.collective_jitter_recovery.calculate
 import algo.collective_jitter_recovery.research
@@ -28,12 +30,12 @@ import algo.cache
 
 def _get_feature_param_labels():
     params = [
-        algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(30),
-        algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(40),
-        algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(240),
+        algo.jitter_common.calculate.JitterFeatureParam(30),
+        algo.jitter_common.calculate.JitterFeatureParam(40),
+        algo.jitter_common.calculate.JitterFeatureParam(240),
     ]
     labels = [
-        algo.jitter_recovery.research.get_feature_label_for_caching(param) for param in params
+        algo.jitter_common.research.get_feature_label_for_caching(param) for param in params
     ]
     return params, labels
 
@@ -97,7 +99,7 @@ def cache_features(
             del dfst_feature
 
     feature_params, labels = _get_feature_param_labels()
-    do_cache(feature_params, labels, algo.jitter_recovery.research.get_dfst_feature)
+    do_cache(feature_params, labels, algo.jitter_common.research.get_dfst_feature)
 
     feature_params, labels = _get_collective_feature_param_labels()
     do_cache(feature_params, labels, algo.collective_jitter_recovery.research.get_dfst_feature)
@@ -105,11 +107,11 @@ def cache_features(
 def _get_trading_param_labels():
     params = [
         algo.jitter_recovery.calculate.JitterRecoveryTradingParam(
-            algo.jitter_recovery.calculate.JitterRecoveryFeatureParam(30),
+            algo.jitter_common.calculate.JitterFeatureParam(30),
             0.20, -0.04, 0.02, is_long_term=False),
     ]
     feature_labels = [
-        algo.jitter_recovery.research.get_feature_label_for_caching(param.feature_param) for param in params
+        algo.jitter_common.research.get_feature_label_for_caching(param.feature_param) for param in params
     ]
     trading_labels = [
         algo.jitter_recovery.research.get_trading_label_for_caching(param) for param in params

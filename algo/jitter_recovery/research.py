@@ -1,82 +1,21 @@
 import pandas as pd
 from collections import defaultdict
 import matplotlib.pyplot as plt
+import algo.jitter_common.calculate
 import algo.jitter_recovery.calculate
-from algo.jitter_recovery.calculate import JitterRecoveryFeatureParam, JitterRecoveryTradingParam
+import algo.jitter_common.research
+from algo.jitter_common.calculate import JitterFeatureParam
+from algo.jitter_recovery.calculate import JitterRecoveryTradingParam
 
 
-_feature_label_prefix = '(changes)'
 _trading_label_prefix = '(changes_trading)'
 
-_primitives = (bool, str, int, float, type(None))
-
-def _is_primitive(obj):
-    return isinstance(obj, _primitives)
-
-def _param_as_label(param):
-    if _is_primitive(param):
-        return str(param)
-    return '/'.join([f'{k}({_param_as_label(v)})' for k, v in vars(param).items()])
-
-def _get_param_label_for_caching(param, label_prefix, label_suffix=None) -> str:
-    raw_label = _param_as_label(param)
-    label_tokens = raw_label.split('/')
-    label_dirs = []
-    label_dir = ''
-    for label_token in label_tokens:
-        label_dir += f'_{label_token}'
-        if len(label_dir) > 200:
-            label_dirs.append(label_dir[1:])
-            label_dir = ''
-
-    if len(label_dir) > 1:
-        label_dirs.append(label_dir[1:])
-
-    label = '/'.join(label_dirs)
-    ret = f"{label_prefix}_{label}"
-    if label_suffix is not None:
-        ret = f"{ret}_{label_suffix}"
-    return ret
-
-
-def get_feature_label_for_caching(feature_param: JitterRecoveryFeatureParam, label_suffix=None) -> str:
-    r = _get_param_label_for_caching(feature_param, _feature_label_prefix, label_suffix=label_suffix)
-    return f'feature/{r}'
-
 def get_trading_label_for_caching(trading_param: JitterRecoveryTradingParam, label_suffix=None) -> str:
-    r = _get_param_label_for_caching(trading_param, _trading_label_prefix, label_suffix=label_suffix)
+    r = algo.jitter_common.research.get_param_label_for_caching(trading_param, _trading_label_prefix, label_suffix=label_suffix)
     return f'trading/{r}'
 
-def _get_usdt_symbol_filter():
-    return lambda s: 'USDT' in s
 
-
-def get_dfst_feature(df, feature_param, symbol_filter=None, value_column='close'):
-    dfi = df.set_index(['timestamp', 'symbol'])
-    all_symbols = df.symbol.unique()
-    if symbol_filter is None:
-        symbol_filter = _get_usdt_symbol_filter()
-    all_symbols = [s for s in all_symbols if symbol_filter(s)]
-    print(f'all_symbols: {len(all_symbols)}')
-
-    dfst_feature = df.set_index(['symbol', 'timestamp'])
-    for i, symbol in enumerate(all_symbols):
-        dfs = dfi.xs(symbol, level=1)
-        
-        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, feature_param, value_column=value_column)
-        del dfs
-        
-        print(f'{i} symbol: {symbol} (feature)')
-        
-        for column in df_feature.columns:
-            dfst_feature.loc[symbol, column] = df_feature[column].values
-        
-        del df_feature
-
-    return dfst_feature
-
-
-def get_dfst_trading(dfst_feature, trading_param):
+def get_dfst_trading(dfst_feature, trading_param: JitterRecoveryTradingParam):
     if 'ch_max' not in dfst_feature.columns:
         symbol_with_jumps = []
     else:
@@ -127,22 +66,10 @@ def add_trading_columns(df_feature, trading_param):
     return df_feature_trading
 
 
-def investigate_trading(dfst_trading):
-    print(f'profit sum: {dfst_trading.profit.sum()}')
-    df_position_changed = dfst_trading.groupby('timestamp').sum()[['position_changed']]
-
-    if len(df_position_changed[df_position_changed.position_changed != 0]) == 0:
-        print(f'no trading happens')
-        return
-
-    fig, ax_profit = plt.subplots(1, figsize=(16,2))
-    ax_profit.plot(dfst_trading.groupby('timestamp').sum().cumsum()[['profit']])
-
-
 def investigate_symbol(df, symbol_investigate, trading_param, figsize=None):
     dfi = df.set_index(['timestamp', 'symbol'])
     dfs = dfi.xs(symbol_investigate, level=1)
-    df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
+    df_feature = algo.jitter_common.calculate.get_feature_df(dfs, trading_param.feature_param)
     df_trading = add_trading_columns(df_feature, trading_param)
     
     if len(df_trading[df_trading.in_position == 1]) == 0:

@@ -1,6 +1,7 @@
 import pandas as pd
 from collections import defaultdict
 import matplotlib.pyplot as plt
+import algo.jitter_common.calculate
 import algo.jitter_recovery.calculate
 import algo.collective_jitter_recovery.calculate
 from algo.collective_jitter_recovery.calculate import CollectiveRecoveryFeatureParam, CollectiveDropRecoveryTradingParam
@@ -43,7 +44,7 @@ def _get_param_label_for_caching(param, label_prefix, label_suffix=None) -> str:
     return ret
 
 
-def get_feature_label_for_caching(feature_param: algo.jitter_recovery.calculate.JitterRecoveryFeatureParam, label_suffix=None) -> str:
+def get_feature_label_for_caching(feature_param: algo.jitter_common.calculate.JitterFeatureParam, label_suffix=None) -> str:
     r = _get_param_label_for_caching(feature_param, _feature_label_prefix, label_suffix=label_suffix)
     return f'feature/{r}'
 
@@ -70,7 +71,7 @@ def get_dfst_feature(df, feature_param: CollectiveRecoveryFeatureParam, symbol_f
     for i, symbol in enumerate(all_symbols):
         dfs = dfi.xs(symbol, level=1)
         
-        df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, feature_param, value_column=value_column)
+        df_feature = algo.jitter_common.calculate.get_feature_df(dfs, feature_param, value_column=value_column)
         del dfs
         
         print(f'{i} symbol: {symbol} (feature)')
@@ -172,7 +173,7 @@ def add_trading_columns(df_feature, trading_param):
 def investigate_symbol(df, df_collective_feature, symbol_investigate, trading_param, figsize=None):
     dfi = df.set_index(['timestamp', 'symbol'])
     dfs = dfi.xs(symbol_investigate, level=1)
-    df_feature = algo.jitter_recovery.calculate.get_feature_df(dfs, trading_param.feature_param)
+    df_feature = algo.jitter_common.calculate.get_feature_df(dfs, trading_param.feature_param)
     df_trading = add_trading_columns(df_feature, trading_param)
     
     if len(df_trading[df_trading.in_position != 0]) == 0:
