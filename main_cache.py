@@ -140,7 +140,7 @@ def _get_jitter_following_trading_param_labels():
         algo.jitter_common.research.get_feature_label_for_caching(param.feature_param) for param in params
     ]
     trading_labels = [
-        algo.jitter_recovery.research.get_trading_label_for_caching(param) for param in params
+        algo.jitter_following.research.get_trading_label_for_caching(param) for param in params
     ]
     return params, feature_labels, trading_labels
 
@@ -330,6 +330,7 @@ if __name__ == '__main__':
     if_cache_trading = True
     if_verify_trading = False
     run_okx(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
     #run_binance(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_cex(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
