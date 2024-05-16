@@ -85,11 +85,11 @@ def investigate_trading(dfst_trading):
     ax_profit.plot(dfst_trading.groupby('timestamp').sum().cumsum()[['profit']])
 
 
-def investigate_symbol(df, symbol_investigate, add_trading_columns, trading_param, figsize=None):
+def investigate_symbol(df, symbol_investigate, add_trading_columns_func, trading_param, figsize=None):
     dfi = df.set_index(['timestamp', 'symbol'])
     dfs = dfi.xs(symbol_investigate, level=1)
     df_feature = algo.jitter_common.calculate.get_feature_df(dfs, trading_param.feature_param)
-    df_trading = add_trading_columns(df_feature, trading_param)
+    df_trading = add_trading_columns_func(df_feature, trading_param)
 
     if len(df_trading[df_trading.in_position == 1]) == 0:
         print(f'no trading happens')
@@ -117,7 +117,7 @@ def investigate_symbol(df, symbol_investigate, add_trading_columns, trading_para
 
     i_head = df_trading.index.get_loc(df_trading[df_trading.position_changed == +1].index[0])
     i_tail = df_trading.index.get_loc(df_trading[df_trading.position_changed == -1].index[-1])
-    if not trading_param.is_long_term:
+    if not hasattr(trading_param, 'is_long_term') or not trading_param.is_long_term:
         df_plot = df_trading.iloc[i_head - 2 * 60:i_tail + 2 * 60]
     else:
         df_plot = df_trading.iloc[i_head - 12 * 60:i_tail + 12 * 60]
