@@ -214,13 +214,13 @@ def cache_trading(
             del dfst_trading
 
     trading_params, feature_labels, trading_labels = _get_trading_param_labels()
-    do_cache(trading_params, feature_labels, trading_labels, algo.jitter_recovery.research.get_dfst_trading)
+    do_cache(trading_params, feature_labels, trading_labels, algo.alpha.jitter_recovery.research.get_dfst_trading)
 
     trading_params, feature_labels, trading_labels = _get_jitter_following_trading_param_labels()
     do_cache(trading_params, feature_labels, trading_labels, algo.alpha.jitter_following.research.get_dfst_trading)
 
     trading_params, feature_labels, trading_labels = _get_collective_trading_param_labels()
-    do_cache(trading_params, feature_labels, trading_labels, algo.collective_jitter.research.get_dfst_trading)
+    do_cache(trading_params, feature_labels, trading_labels, algo.alpha.collective_jitter_recovery.research.get_dfst_trading)
 
 
 def cache_all(
