@@ -1,46 +1,14 @@
-import algo.jitter_common.calculate
-from algo.jitter_common.calculate import JitterFeatureParam
+import algo.feature.jitter.calculate
+import algo.feature.util.research
+from algo.feature.jitter.calculate import JitterFeatureParam
 import matplotlib.pyplot as plt
-
-_primitives = (bool, str, int, float, type(None))
-
-def _is_primitive(obj):
-    return isinstance(obj, _primitives)
-
-
-def _param_as_label(param):
-    if _is_primitive(param):
-        return str(param)
-    # new directory is used to avoid the file name limit (256) violation.
-    return '/'.join([f'{k}({_param_as_label(v)})' for k, v in vars(param).items()])
-
-
-def get_param_label_for_caching(param, label_prefix, label_suffix=None) -> str:
-    raw_label = _param_as_label(param)
-    label_tokens = raw_label.split('/')
-    label_dirs = []
-    label_dir = ''
-    for label_token in label_tokens:
-        label_dir += f'_{label_token}'
-        if len(label_dir) > 200:
-            label_dirs.append(label_dir[1:])
-            label_dir = ''
-
-    if len(label_dir) > 1:
-        label_dirs.append(label_dir[1:])
-
-    label = '/'.join(label_dirs)
-    ret = f"{label_prefix}_{label}"
-    if label_suffix is not None:
-        ret = f"{ret}_{label_suffix}"
-    return ret
 
 
 _feature_label_prefix = '(changes)'
 
 
 def get_feature_label_for_caching(feature_param: JitterFeatureParam, label_suffix=None) -> str:
-    r = get_param_label_for_caching(feature_param, _feature_label_prefix, label_suffix=label_suffix)
+    r = algo.feature.util.research.get_param_label_for_caching(feature_param, _feature_label_prefix, label_suffix=label_suffix)
     return f'feature/{r}'
 
 
@@ -60,7 +28,7 @@ def get_dfst_feature(df, feature_param: JitterFeatureParam, symbol_filter=None, 
     for i, symbol in enumerate(all_symbols):
         dfs = dfi.xs(symbol, level=1)
 
-        df_feature = algo.jitter_common.calculate.get_feature_df(dfs, feature_param, value_column=value_column)
+        df_feature = algo.feature.jitter.calculate.get_feature_df(dfs, feature_param, value_column=value_column)
         del dfs
 
         print(f'{i} symbol: {symbol} (feature)')
@@ -88,7 +56,7 @@ def investigate_trading(dfst_trading):
 def investigate_symbol(df, symbol_investigate, add_trading_columns_func, trading_param, figsize=None):
     dfi = df.set_index(['timestamp', 'symbol'])
     dfs = dfi.xs(symbol_investigate, level=1)
-    df_feature = algo.jitter_common.calculate.get_feature_df(dfs, trading_param.feature_param)
+    df_feature = algo.feature.jitter.calculate.get_feature_df(dfs, trading_param.feature_param)
     df_trading = add_trading_columns_func(df_feature, trading_param)
 
     if len(df_trading[df_trading.in_position == 1]) == 0:

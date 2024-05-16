@@ -1,4 +1,4 @@
-import datetime, logging, sys, os
+import logging, sys, os
 
 
 if os.path.exists('credential.json'):
@@ -19,34 +19,36 @@ logging.basicConfig(
 import market_data.ingest.bq.common
 import market_data.ingest.bq.cache
 import market_data.ingest.bq.validate
-import algo.jitter_common.calculate
-import algo.jitter_recovery.calculate
-import algo.jitter_following.calculate
-import algo.jitter_common.research
-import algo.jitter_recovery.research
-import algo.jitter_following.research
-import algo.collective_jitter_recovery.calculate
-import algo.collective_jitter_recovery.research
+import algo.feature.jitter.calculate
+import algo.feature.collective_jitter.calculate
+import algo.alpha.jitter_recovery.calculate
+import algo.alpha.jitter_following.calculate
+import algo.alpha.collective_jitter_recovery.calculate
+import algo.feature.jitter.research
+import algo.feature.collective_jitter.research
+import algo.alpha.jitter_recovery.research
+import algo.alpha.jitter_following.research
+import algo.alpha.collective_jitter_recovery.research
 import algo.cache
 
 
 def _get_feature_param_labels():
     params = [
-        algo.jitter_common.calculate.JitterFeatureParam(30),
-        algo.jitter_common.calculate.JitterFeatureParam(40),
-        algo.jitter_common.calculate.JitterFeatureParam(240),
+        algo.feature.jitter.calculate.JitterFeatureParam(30),
+        algo.feature.jitter.calculate.JitterFeatureParam(40),
+        algo.feature.jitter.calculate.JitterFeatureParam(240),
     ]
     labels = [
-        algo.jitter_common.research.get_feature_label_for_caching(param) for param in params
+        algo.feature.jitter.research.get_feature_label_for_caching(param) for param in params
     ]
     return params, labels
 
 def _get_collective_feature_param_labels():
     collective_params = [
-        algo.collective_jitter_recovery.calculate.CollectiveRecoveryFeatureParam(window=40, collective_window=30),
+        algo.feature.collective_jitter.calculate.CollectiveJitterFeatureParam(window=40, collective_window=30),
     ]
     collective_labels = [
-        algo.collective_jitter_recovery.research.get_feature_label_for_caching(param) for param in collective_params
+        algo.feature.collective_jitter.research.get_feature_label_for_caching(param) for param in collective_params
     ]
     return collective_params, collective_labels
 
@@ -101,64 +103,64 @@ def cache_features(
             del dfst_feature
 
     feature_params, labels = _get_feature_param_labels()
-    do_cache(feature_params, labels, algo.jitter_common.research.get_dfst_feature)
+    do_cache(feature_params, labels, algo.feature.jitter.research.get_dfst_feature)
 
     feature_params, labels = _get_collective_feature_param_labels()
-    do_cache(feature_params, labels, algo.collective_jitter_recovery.research.get_dfst_feature)
+    do_cache(feature_params, labels, algo.alpha.jitter_recovery.research.get_dfst_feature)
 
 def _get_trading_param_labels():
     params = [
-        algo.jitter_recovery.calculate.JitterRecoveryTradingParam(
-            algo.jitter_common.calculate.JitterFeatureParam(30),
+        algo.alpha.jitter_recovery.calculate.JitterRecoveryTradingParam(
+            algo.feature.jitter.calculate.JitterFeatureParam(30),
             0.20, -0.04, 0.02, is_long_term=False),
     ]
     feature_labels = [
-        algo.jitter_common.research.get_feature_label_for_caching(param.feature_param) for param in params
+        algo.feature.jitter.research.get_feature_label_for_caching(param.feature_param) for param in params
     ]
     trading_labels = [
-        algo.jitter_recovery.research.get_trading_label_for_caching(param) for param in params
+        algo.alpha.jitter_recovery.research.get_trading_label_for_caching(param) for param in params
     ]
     return params, feature_labels, trading_labels
 
 
 def _get_jitter_following_trading_param_labels():
     params = [
-        algo.jitter_following.calculate.JitterFollowingTradingParam(
-            algo.jitter_common.calculate.JitterFeatureParam(30),
+        algo.alpha.jitter_following.calculate.JitterFollowingTradingParam(
+            algo.feature.jitter.calculate.JitterFeatureParam(30),
             0.15, -0.02),
-        algo.jitter_following.calculate.JitterFollowingTradingParam(
-            algo.jitter_common.calculate.JitterFeatureParam(30),
+        algo.alpha.jitter_following.calculate.JitterFollowingTradingParam(
+            algo.feature.jitter.calculate.JitterFeatureParam(30),
             0.20, -0.02),
-        algo.jitter_following.calculate.JitterFollowingTradingParam(
-            algo.jitter_common.calculate.JitterFeatureParam(30),
+        algo.alpha.jitter_following.calculate.JitterFollowingTradingParam(
+            algo.feature.jitter.calculate.JitterFeatureParam(30),
             0.15, -0.01),
-        algo.jitter_following.calculate.JitterFollowingTradingParam(
-            algo.jitter_common.calculate.JitterFeatureParam(30),
+        algo.alpha.jitter_following.calculate.JitterFollowingTradingParam(
+            algo.feature.jitter.calculate.JitterFeatureParam(30),
             0.20, -0.01),
     ]
     feature_labels = [
-        algo.jitter_common.research.get_feature_label_for_caching(param.feature_param) for param in params
+        algo.feature.jitter.research.get_feature_label_for_caching(param.feature_param) for param in params
     ]
     trading_labels = [
-        algo.jitter_following.research.get_trading_label_for_caching(param) for param in params
+        algo.alpha.jitter_following.research.get_trading_label_for_caching(param) for param in params
     ]
     return params, feature_labels, trading_labels
 
 
 def _get_collective_trading_param_labels():
     collective_params = [
-        algo.collective_jitter_recovery.calculate.CollectiveRecoveryTradingParam(
-            algo.collective_jitter_recovery.calculate.CollectiveRecoveryFeatureParam(window=40, collective_window=30),
-            collective_drop_recovery_trading_param=algo.collective_jitter_recovery.calculate.CollectiveDropRecoveryTradingParam(
+        algo.alpha.collective_jitter_recovery.calculate.CollectiveRecoveryTradingParam(
+            algo.feature.collective_jitter.calculate.CollectiveJitterFeatureParam(window=40, collective_window=30),
+            collective_drop_recovery_trading_param=algo.alpha.collective_jitter_recovery.calculate.CollectiveDropRecoveryTradingParam(
                 -0.03, -0.30, -0.03, +0.005, -0.01),
             collective_jump_recovery_trading_param=None,
         ),
     ]
     collective_feature_labels = [
-        algo.collective_jitter_recovery.research.get_feature_label_for_caching(param.feature_param) for param in collective_params
+        algo.feature.collective_jitter.research.get_feature_label_for_caching(param.feature_param) for param in collective_params
     ]
     collective_trading_labels = [
-        algo.collective_jitter_recovery.research.get_trading_label_for_caching(param) for param in collective_params
+        algo.alpha.collective_jitter_recovery.research.get_trading_label_for_caching(param) for param in collective_params
     ]
     return collective_params, collective_feature_labels, collective_trading_labels
 
@@ -212,13 +214,13 @@ def cache_trading(
             del dfst_trading
 
     trading_params, feature_labels, trading_labels = _get_trading_param_labels()
-    #do_cache(trading_params, feature_labels, trading_labels, algo.jitter_recovery.research.get_dfst_trading)
+    do_cache(trading_params, feature_labels, trading_labels, algo.jitter_recovery.research.get_dfst_trading)
 
     trading_params, feature_labels, trading_labels = _get_jitter_following_trading_param_labels()
-    do_cache(trading_params, feature_labels, trading_labels, algo.jitter_following.research.get_dfst_trading)
+    do_cache(trading_params, feature_labels, trading_labels, algo.alpha.jitter_following.research.get_dfst_trading)
 
     trading_params, feature_labels, trading_labels = _get_collective_trading_param_labels()
-    #do_cache(trading_params, feature_labels, trading_labels, algo.collective_jitter_recovery.research.get_dfst_trading)
+    do_cache(trading_params, feature_labels, trading_labels, algo.collective_jitter.research.get_dfst_trading)
 
 
 def cache_all(
@@ -323,15 +325,16 @@ def run_bithumb(date_str_from: str, date_str_to: str, if_cache_features=False, i
 
 
 if __name__ == '__main__':
-    date_str_from='2024-02-14'
+    date_str_from='2024-05-08'
     date_str_to='2024-05-10'
     if_cache_features = False
     if_verify_features = False
-    if_cache_trading = True
-    if_verify_trading = False
+    if_cache_trading = False
+    if_verify_trading = True
     run_okx(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
     #run_binance(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_cex(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_bithumb(date_str_from=date_str_from, date_str_to=date_str_to, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+

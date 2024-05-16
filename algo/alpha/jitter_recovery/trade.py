@@ -2,7 +2,8 @@ import pandas as pd, numpy as np, datetime
 import pytz
 import logging
 
-import algo.jitter_recovery.calculate
+import algo.feature.jitter.calculate
+import algo.alpha.jitter_recovery.calculate
 import trading.execution
 from collections import defaultdict
 
@@ -15,20 +16,20 @@ def epoch_seconds_to_datetime(timestamp_seconds):
 class TradeManager:
     def __init__(self, is_long_term, trading_param=None, trade_execution=None):
         if not is_long_term:
-            default_trading_param = algo.jitter_recovery.calculate.JitterRecoveryTradingParam.get_default_param_longterm()
+            default_trading_param = algo.alpha.jitter_recovery.calculate.JitterRecoveryTradingParam.get_default_param_longterm()
         else:
-            default_trading_param = algo.jitter_recovery.calculate.JitterRecoveryTradingParam.get_default_param()
+            default_trading_param = algo.alpha.jitter_recovery.calculate.JitterRecoveryTradingParam.get_default_param()
 
         self.trading_param = trading_param if trading_param is not None else default_trading_param
         self.trade_execution = trade_execution if trade_execution else trading.execution.TradeExecution()
-        self.status_per_symbol = defaultdict(algo.jitter_recovery.calculate.Status)
+        self.status_per_symbol = defaultdict(algo.alpha.jitter_recovery.calculate.Status)
 
     def on_new_minutes(self, symbol, timestamp_epoch_seconds, timestamp_epochs_values):
         '''
         timestamp_epochs_values is an arrya of (timestamp, value) tuples.
         '''
         w = self.trading_param.feature_param.window
-        changes = algo.jitter_recovery.calculate.get_changes_1dim(np.array([tv[1] for tv in list(timestamp_epochs_values)[-w:]]))
+        changes = algo.feature.jitter.calculate.get_changes_1dim(np.array([tv[1] for tv in list(timestamp_epochs_values)[-w:]]))
         in_position_before = self.status_per_symbol[symbol].in_position
         self.status_per_symbol[symbol].update(changes, self.trading_param)
         if self.status_per_symbol[symbol].in_position != in_position_before:

@@ -1,10 +1,7 @@
-import pandas as pd, numpy as np
-from collections import defaultdict
-from algo.jitter_recovery.calculate import Status as BasicStatus
+import pandas as pd
+from algo.alpha.jitter_recovery.calculate import Status as BasicStatus
+from algo.feature.collective_jitter.calculate import CollectiveJitterFeatureParam
 
-
-default_window = 40
-default_collective_window = 40
 
 default_collective_drop_threshold = -0.10
 default_collective_drop_lower_threshold = -0.40
@@ -21,20 +18,6 @@ default_small_drop_threshold, default_jump_from_small_drop_threshold, default_ex
 default_collective_small_jump_threshold = +0.03
 default_collective_small_jump_lower_threshold = +0.15
 default_small_jump_threshold, default_drop_from_small_jump_threshold, default_exit_small_jump_threshold = +0.03, -0.005, +0.01
-
-
-class CollectiveRecoveryFeatureParam:
-    def __init__(self, window: int, collective_window: int):
-        self.window = window
-        self.collective_window = collective_window
-
-    @staticmethod
-    def get_default_param():
-        return CollectiveRecoveryFeatureParam(
-            default_window, default_collective_window)
-
-    def __str__(self):
-        return ', '.join([f'{k}: {str(v)}' for k, v in vars(self).items()])
 
 
 class CollectiveDropRecoveryTradingParam:
@@ -110,7 +93,7 @@ class CollectiveRecoveryTradingParam:
     @staticmethod
     def get_default_param():
         return CollectiveRecoveryTradingParam(
-            CollectiveRecoveryFeatureParam.get_default_param(), 
+            CollectiveJitterFeatureParam.get_default_param(), 
             CollectiveDropRecoveryTradingParam.get_default_param(), 
             CollectiveJumpRecoveryTradingParam.get_default_param(), 
             )
@@ -118,7 +101,7 @@ class CollectiveRecoveryTradingParam:
     @staticmethod
     def get_default_param_small_move():
         return CollectiveRecoveryTradingParam(
-            CollectiveRecoveryFeatureParam.get_default_param(), 
+            CollectiveJitterFeatureParam.get_default_param(), 
             CollectiveDropRecoveryTradingParam.get_default_param_small_drop(), 
             CollectiveJumpRecoveryTradingParam.get_default_param_small_jump(), 
             )
@@ -126,7 +109,7 @@ class CollectiveRecoveryTradingParam:
     @staticmethod
     def get_default_param_small_drop():
         return CollectiveRecoveryTradingParam(
-            CollectiveRecoveryFeatureParam.get_default_param(),
+            CollectiveJitterFeatureParam.get_default_param(),
             CollectiveDropRecoveryTradingParam.get_default_param_small_drop(),
             collective_jump_recovery_trading_param=None,
             )

@@ -2,8 +2,9 @@ import numpy as np, datetime
 import pytz
 import logging
 
-import algo.jitter_recovery.calculate
-import algo.collective_jitter_recovery.calculate
+import algo.feature.jitter.calculate
+import algo.alpha.jitter_recovery.calculate
+import algo.alpha.collective_jitter_recovery.calculate
 import trading.execution
 from collections import defaultdict, deque
 
@@ -15,11 +16,11 @@ def epoch_seconds_to_datetime(timestamp_seconds):
 
 class TradeManager:
     def __init__(self, trading_param=None, trade_execution=None):
-        default_trading_param = algo.collective_jitter_recovery.calculate.CollectiveRecoveryTradingParam.get_default_param()
+        default_trading_param = algo.alpha.collective_jitter_recovery.calculate.CollectiveRecoveryTradingParam.get_default_param()
 
         self.trading_param = trading_param if trading_param is not None else default_trading_param
         self.trade_execution = trade_execution if trade_execution else trading.execution.TradeExecution()
-        self.status_per_symbol = defaultdict(algo.collective_jitter_recovery.calculate.Status)
+        self.status_per_symbol = defaultdict(algo.alpha.collective_jitter_recovery.calculate.Status)
         self.ch_per_symbol = defaultdict(float)
         self.ch_min_per_symbol = defaultdict(float)
         self.collective_chs = deque()
@@ -53,7 +54,7 @@ class TradeManager:
         timestamp_epochs_values is an arrya of (timestamp, value) tuples.
         '''
         w = self.trading_param.feature_param.window
-        changes = algo.jitter_recovery.calculate.get_changes_1dim(np.array([tv[1] for tv in list(timestamp_epochs_values)[-w:]]))
+        changes = algo.feature.jitter.calculate.get_changes_1dim(np.array([tv[1] for tv in list(timestamp_epochs_values)[-w:]]))
         self.ch_per_symbol[symbol] = changes['ch']
         collective_features = self._get_collective_features(timestamp_epoch_seconds)
         features = {**changes, **collective_features}

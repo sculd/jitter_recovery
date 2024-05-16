@@ -1,11 +1,7 @@
-import pandas as pd, numpy as np
-from collections import defaultdict
-import numba
-from numba import njit
-from numba.experimental import jitclass
+import pandas as pd
 
-import algo.jitter_common.calculate
-from algo.jitter_common.calculate import JitterFeatureParam
+import algo.feature.jitter.calculate
+from algo.feature.jitter.calculate import JitterFeatureParam
 
 default_jump_threshold, default_drop_from_jump_threshold, default_exit_jumpt_threshold = 0.20, -0.04, 0.02
 default_jump_threshold_longterm, default_drop_from_jump_threshold_longterm, default_exit_jumpt_threshold_longterm = 0.40, -0.10, 0.05
@@ -56,8 +52,8 @@ class Status:
                 self.lowest_since_enter = value
 
             self.timedelta_since_position_enter += 1
-            self.ch_from_enter = algo.jitter_common.calculate._get_ch(self.value_at_enter, value)
-            self.ch_from_lowest_since_enter = algo.jitter_common.calculate._get_ch(self.lowest_since_enter, value)
+            self.ch_from_enter = algo.feature.jitter.calculate._get_ch(self.value_at_enter, value)
+            self.ch_from_lowest_since_enter = algo.feature.jitter.calculate._get_ch(self.lowest_since_enter, value)
 
             if not trading_param.is_long_term:
                 if self.ch_from_lowest_since_enter > trading_param.exit_jumpt_threshold:

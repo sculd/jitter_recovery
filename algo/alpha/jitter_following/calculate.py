@@ -1,11 +1,7 @@
-import pandas as pd, numpy as np
-from collections import defaultdict
-import numba
-from numba import njit
-from numba.experimental import jitclass
+import pandas as pd
 
-import algo.jitter_common.calculate
-from algo.jitter_common.calculate import JitterFeatureParam
+import algo.feature.jitter.calculate
+from algo.feature.jitter.calculate import JitterFeatureParam
 
 default_jump_threshold, default_exit_drop_threshold = 0.10, -0.03
 
@@ -53,22 +49,22 @@ class Status:
                 self.highest_since_enter = value
 
             self.timedelta_since_position_enter += 1
-            self.ch_from_enter = algo.jitter_common.calculate._get_ch(self.value_at_enter, value)
-            self.ch_from_lowest_since_enter = algo.jitter_common.calculate._get_ch(self.lowest_since_enter, value)
-            self.ch_from_highest_since_enter = algo.jitter_common.calculate._get_ch(self.highest_since_enter, value)
+            self.ch_from_enter = algo.feature.jitter.calculate._get_ch(self.value_at_enter, value)
+            self.ch_from_lowest_since_enter = algo.feature.jitter.calculate._get_ch(self.lowest_since_enter, value)
+            self.ch_from_highest_since_enter = algo.feature.jitter.calculate._get_ch(self.highest_since_enter, value)
 
-            if self.ch_from_highest_since_enter < trading_param.exit_drop_threshold \
-                and self.timedelta_since_position_enter >= 5:
+            if self.ch_from_highest_since_enter < -0.01:
                 self.in_position = 0
 
-            if self.ch_from_enter < trading_param.exit_drop_threshold:
+            if self.ch_from_enter < -0.01:
+                #if self.ch_from_enter < trading_param.exit_drop_threshold:
                 self.in_position = 0
 
-            if value < (self.v_ch_max_is_to_when_enter - self.v_ch_max_is_from_when_enter) / 3.0 + self.v_ch_max_is_from_when_enter:
+            if self.ch_from_enter >= 0.10:
                 self.in_position = 0
         else:
             should_enter_position = features['ch_max'] > trading_param.jump_threshold \
-            and features['distance_max_ch'] < 2
+            and features['distance_max_ch'] < 1
 
             if should_enter_position:
                 self.in_position = 1
