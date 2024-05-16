@@ -58,8 +58,8 @@ def add_trading_columns(df_feature, trading_param):
 
     df_feature_trading = pd.DataFrame(trading_dict, index=df_feature.index)
     df_feature_trading['position_changed'] = df_feature_trading.in_position.diff()
-    df_feature_trading['profit_raw'] = -df_feature_trading.value.diff() * df_feature_trading.in_position.shift()
-    df_feature_trading['profit'] = -df_feature_trading.value.pct_change() * df_feature_trading.in_position.shift()
+    df_feature_trading['profit_raw'] = df_feature_trading.value.diff() * df_feature_trading.in_position.shift()
+    df_feature_trading['profit'] = df_feature_trading.value.pct_change() * df_feature_trading.in_position.shift()
 
     del trading_dict
     return df_feature_trading
