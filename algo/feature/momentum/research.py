@@ -40,7 +40,8 @@ def get_dfst_feature(df, feature_param: MomentumFeatureParam, symbol_filter=None
             dfst_feature.loc[symbol, column] = df_feature[column].values
         del df_feature
 
-    dfst_feature['ch_rank'] = dfst_feature.groupby('timestamp')[['ch']].rank('average').rename(columns={'ch': 'ch_rank'})
-    dfst_feature['ch_rank_descending'] = dfst_feature.groupby('timestamp')[['ch']].rank('average', ascending=False).rename(columns={'ch': 'ch_rank_descending'})
+    ch_column_name = 'ch_ewms'
+    dfst_feature['rank'] = dfst_feature.groupby('timestamp')[[ch_column_name]].rank('average').rename(columns={ch_column_name: 'rank'})
+    dfst_feature['rank_descending'] = dfst_feature.groupby('timestamp')[[ch_column_name]].rank('average', ascending=False).rename(columns={ch_column_name: 'rank_descending'})
     return dfst_feature
 
