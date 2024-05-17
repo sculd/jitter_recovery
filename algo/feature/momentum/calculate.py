@@ -58,14 +58,14 @@ def get_momentum_1dim(values, ema_window):
     l = values.shape[0]
     if l < 1: return None
 
-    ewms = _get_ema(values, window=ema_window)
+    emas = _get_ema(values, window=ema_window)
     return {
         'value': values[-1],
-        'ewm': ewms[-1],
+        'ema': emas[-1],
         'ch': _get_ch(values[0], values[-1]),
-        'ch_ewms': _get_ch(ewms[0], ewms[-1]),
+        'ch_ema': _get_ch(emas[0], emas[-1]),
         #'ch': _largest_change(values),
-        #'ch_ewms': _largest_change(ewms),
+        #'ch_ema': _largest_change(ewms),
     }
 
 

@@ -20,8 +20,8 @@ def get_dfst_trading(dfst_feature, trading_param: MomentumTradingParam):
         symbol_with_momentums = []
     else:
         symbol_with_momentums = dfst_feature[
-            ((dfst_feature['rank'] <= trading_param.selection_size) & (dfst_feature['ch_ewms'] < 0))
-            | ((dfst_feature['rank_descending'] <= trading_param.selection_size) & (dfst_feature['ch_ewms'] > 0))
+            ((dfst_feature['rank'] <= trading_param.selection_size) & (dfst_feature['ch_ema'] < 0))
+            | ((dfst_feature['rank_descending'] <= trading_param.selection_size) & (dfst_feature['ch_ema'] > 0))
             ].index.get_level_values('symbol').unique().values
 
     print(f'symbol_with_momentums: {len((symbol_with_momentums))}')
@@ -74,9 +74,9 @@ def investigate_symbol(dfst_feature, symbol_investigate, trading_param, figsize=
 
     figsize = figsize if figsize else (6, 9)
     fig, (ax_close, ax_profit, ax_in_position, ax_chs, ax_ranks, ax_profit_in_position) = plt.subplots(6, figsize=figsize)
-    ax_close.plot(df_feature[['close', 'ewm']])
+    ax_close.plot(df_feature[['close', 'ema']])
     ax_profit.plot(df_trading[['profit']].cumsum())
-    ax_chs.plot(df_trading[['ch', 'ch_ewms']])
+    ax_chs.plot(df_trading[['ch', 'ch_ema']])
     ax_ranks.plot(df_trading[['rank', 'rank_descending']])
     ax_in_position.plot(df_trading[['in_position']])
     ax_profit_in_position.plot(df_trading[(df_trading.in_position.shift() != 0)][['profit']].cumsum())

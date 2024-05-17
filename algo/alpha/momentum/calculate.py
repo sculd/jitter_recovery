@@ -23,6 +23,13 @@ class MomentumTradingParam:
         return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
 
 
+def _is_long(features, trading_param: MomentumTradingParam):
+    return features['rank_descending'] <= trading_param.selection_size and features['ch_ema'] > 0
+
+def _is_short(features, trading_param: MomentumTradingParam):
+    return features['rank'] <= trading_param.selection_size and features['ch_ema'] < 0
+
+
 class Status:
     def __init__(self):
         self.reset()
@@ -31,33 +38,31 @@ class Status:
         self.in_position = 0
         self.value_at_enter = 0
         self.ch_from_enter = 0
+        self.ema_at_enter = 0
+        self.ch_ema_from_enter = 0
 
     def __str__(self):
         return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
 
     def update(self, t: datetime.datetime, features: dict, trading_param: MomentumTradingParam) -> None:
         value = features['value']
+        ema = features['ema']
 
         if self.in_position != 0:
             self.ch_from_enter = algo.feature.momentum.calculate._get_ch(self.value_at_enter, value)
+            self.ch_ema_from_enter = algo.feature.momentum.calculate._get_ch(self.ema_at_enter, ema)
 
         if int(t.strftime('%s')) % (trading_param.rebalance_interval_minutes * 60) != 0:
             return
 
-        def is_long(features):
-            return features['rank_descending'] <= trading_param.selection_size and features['ch_ewms'] > 0
-
-        def is_short(features):
-            return features['rank'] <= trading_param.selection_size and features['ch_ewms'] < 0
-
         if self.in_position == 1:
-            self.in_position = 1 if is_long(features) else 0
+            self.in_position = 1 if _is_long(features, trading_param) else 0
         elif self.in_position == -1:
-            self.in_position = -1 if is_short(features) else 0
+            self.in_position = -1 if _is_short(features, trading_param) else 0
         else:
-            if is_long(features):
+            if _is_long(features, trading_param):
                 in_position = 1
-            elif is_short(features):
+            elif _is_short(features, trading_param):
                 in_position = -1
             else:
                 in_position = 0
@@ -66,6 +71,8 @@ class Status:
                 self.in_position = in_position
                 self.value_at_enter = value
                 self.ch_from_enter = 0
+                self.ema_at_enter = ema
+                self.ch_ema_from_enter = 0
 
         if self.in_position == 0:
             self.reset()
