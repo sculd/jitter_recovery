@@ -64,6 +64,7 @@ def get_momentum_1dim(values, ema_window):
         'ema': emas[-1],
         'ch': _get_ch(values[0], values[-1]),
         'ch_ema': _get_ch(emas[0], emas[-1]),
+        'momentum': _get_ch(emas[0], emas[-1]),
         #'ch': _largest_change(values),
         #'ch_ema': _largest_change(ewms),
     }

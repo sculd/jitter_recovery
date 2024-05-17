@@ -76,7 +76,7 @@ def investigate_symbol(dfst_feature, symbol_investigate, trading_param, figsize=
     fig, (ax_close, ax_profit, ax_in_position, ax_chs, ax_ranks, ax_profit_in_position) = plt.subplots(6, figsize=figsize)
     ax_close.plot(df_feature[['close', 'ema']])
     ax_profit.plot(df_trading[['profit']].cumsum())
-    ax_chs.plot(df_trading[['ch', 'ch_ema']])
+    ax_chs.plot(df_trading[['ch', 'ch_ema', 'momentum']])
     ax_ranks.plot(df_trading[['rank', 'rank_descending']])
     ax_in_position.plot(df_trading[['in_position']])
     ax_profit_in_position.plot(df_trading[(df_trading.in_position.shift() != 0)][['profit']].cumsum())

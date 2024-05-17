@@ -24,10 +24,10 @@ class MomentumTradingParam:
 
 
 def _is_long(features, trading_param: MomentumTradingParam):
-    return features['rank_descending'] <= trading_param.selection_size and features['ch_ema'] > 0
+    return features['rank_descending'] <= trading_param.selection_size and features['momentum'] > 0
 
 def _is_short(features, trading_param: MomentumTradingParam):
-    return features['rank'] <= trading_param.selection_size and features['ch_ema'] < 0
+    return features['rank'] <= trading_param.selection_size and features['momentum'] < 0
 
 
 class Status:
@@ -51,6 +51,13 @@ class Status:
         if self.in_position != 0:
             self.ch_from_enter = algo.feature.momentum.calculate._get_ch(self.value_at_enter, value)
             self.ch_ema_from_enter = algo.feature.momentum.calculate._get_ch(self.ema_at_enter, ema)
+
+        '''
+        # stop-loss
+        if self.ch_ema_from_enter * self.in_position < -0.05:
+            self.in_position = 0
+            self.reset()
+        '''
 
         if int(t.strftime('%s')) % (trading_param.rebalance_interval_minutes * 60) != 0:
             return
