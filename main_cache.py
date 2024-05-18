@@ -36,7 +36,7 @@ import algo.alpha.momentum.research
 import algo.cache
 
 
-def _get_jitter_feature_param_labels():
+def _get_jitter_feature_param_labels_get_dfst_feature_func():
     params = [
         algo.feature.jitter.calculate.JitterFeatureParam(30),
         algo.feature.jitter.calculate.JitterFeatureParam(40),
@@ -45,40 +45,41 @@ def _get_jitter_feature_param_labels():
     labels = [
         algo.feature.jitter.research.get_feature_label_for_caching(param) for param in params
     ]
-    return params, labels
+    return params, labels, algo.feature.jitter.research.get_dfst_feature
 
-def _get_collective_feature_param_labels():
+def _get_collective_feature_param_labels_get_dfst_feature_func():
     collective_params = [
         algo.feature.collective_jitter.calculate.CollectiveJitterFeatureParam(window=40, collective_window=30),
     ]
     collective_labels = [
         algo.feature.collective_jitter.research.get_feature_label_for_caching(param) for param in collective_params
     ]
-    return collective_params, collective_labels
+    return collective_params, collective_labels, algo.feature.collective_jitter.research.get_dfst_feature
 
-def _get_momentum_feature_param_labels():
+def _get_momentum_feature_param_labels_get_dfst_feature_func():
     params = [
         algo.feature.momentum.calculate.MomentumFeatureParam(120, 30),
         algo.feature.momentum.calculate.MomentumFeatureParam(180, 30),
+        algo.feature.momentum.calculate.MomentumFeatureParam(360, 60),
     ]
     labels = [
         algo.feature.momentum.research.get_feature_label_for_caching(param) for param in params
     ]
-    return params, labels
+    return params, labels, algo.feature.momentum.research.get_dfst_feature
 
 
-def _get_feature_param_labels(feature_name: str):
+def _get_feature_param_labels_get_dfst_feature_func(feature_name: str):
     if feature_name == 'jitter':
-        return _get_jitter_feature_param_labels()
+        return _get_jitter_feature_param_labels_get_dfst_feature_func()
     elif feature_name == 'collective_jitter':
-        return _get_collective_feature_param_labels()
+        return _get_collective_feature_param_labels_get_dfst_feature_func()
     elif feature_name == 'momentum':
-        return _get_momentum_feature_param_labels()
+        return _get_momentum_feature_param_labels_get_dfst_feature_func()
     else:
         return [], []
 
 
-def _get_jitter_trading_param_labels():
+def _get_jitter_trading_param_labels_trading_func():
     params = [
         algo.alpha.jitter_recovery.calculate.JitterRecoveryTradingParam(
             algo.feature.jitter.calculate.JitterFeatureParam(30),
@@ -90,10 +91,10 @@ def _get_jitter_trading_param_labels():
     trading_labels = [
         algo.alpha.jitter_recovery.research.get_trading_label_for_caching(param) for param in params
     ]
-    return params, feature_labels, trading_labels
+    return params, feature_labels, trading_labels, algo.alpha.jitter_recovery.research.get_dfst_trading
 
 
-def _get_jitter_following_trading_param_labels():
+def _get_jitter_following_trading_param_labels_trading_func():
     params = [
         algo.alpha.jitter_following.calculate.JitterFollowingTradingParam(
             algo.feature.jitter.calculate.JitterFeatureParam(30),
@@ -114,10 +115,10 @@ def _get_jitter_following_trading_param_labels():
     trading_labels = [
         algo.alpha.jitter_following.research.get_trading_label_for_caching(param) for param in params
     ]
-    return params, feature_labels, trading_labels
+    return params, feature_labels, trading_labels, algo.alpha.jitter_following.research.get_dfst_trading
 
 
-def _get_collective_trading_param_labels():
+def _get_collective_trading_param_labels_trading_func():
     collective_params = [
         algo.alpha.collective_jitter_recovery.calculate.CollectiveRecoveryTradingParam(
             algo.feature.collective_jitter.calculate.CollectiveJitterFeatureParam(window=40, collective_window=30),
@@ -132,16 +133,36 @@ def _get_collective_trading_param_labels():
     collective_trading_labels = [
         algo.alpha.collective_jitter_recovery.research.get_trading_label_for_caching(param) for param in collective_params
     ]
-    return collective_params, collective_feature_labels, collective_trading_labels
+    return collective_params, collective_feature_labels, collective_trading_labels, algo.alpha.collective_jitter_recovery.research.get_dfst_trading
 
 
-def _get_trading_param_labels(alpha_name: str):
+def _get_momentum_trading_param_labels_trading_func():
+    trading_params = [
+        algo.alpha.momentum.calculate.MomentumTradingParam(
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=180, ema_window=30), selection_size=2, rebalance_interval_minutes=3*60,
+        ),
+        algo.alpha.momentum.calculate.MomentumTradingParam(
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=360, ema_window=60), selection_size=2, rebalance_interval_minutes=6*60,
+        ),
+    ]
+    collective_feature_labels = [
+        algo.feature.momentum.research.get_feature_label_for_caching(param.feature_param) for param in trading_params
+    ]
+    collective_trading_labels = [
+        algo.alpha.momentum.research.get_trading_label_for_caching(param) for param in trading_params
+    ]
+    return trading_params, collective_feature_labels, collective_trading_labels, algo.alpha.momentum.research.get_dfst_trading
+
+
+def _get_trading_param_labels_get_dfst_trading_func(alpha_name: str):
     if alpha_name == 'jitter_reversal':
-        return _get_jitter_trading_param_labels()
+        return _get_jitter_trading_param_labels_trading_func()
     elif alpha_name == 'jitter_following':
-        return _get_jitter_following_trading_param_labels()
+        return _get_jitter_following_trading_param_labels_trading_func()
     elif alpha_name == 'collective_jitter':
-        return _get_collective_trading_param_labels()
+        return _get_collective_trading_param_labels_trading_func()
+    elif alpha_name == 'momentum':
+        return _get_momentum_trading_param_labels_trading_func()
     else:
         return [], []
 
@@ -153,7 +174,7 @@ def verify_features_cache(
     export_mode: market_data.ingest.bq.common.EXPORT_MODE,
     feature_name: str,
 ) -> None:
-    _, labels = _get_feature_param_labels(feature_name)
+    _, labels, _ = _get_feature_param_labels_get_dfst_feature_func(feature_name)
     for label in labels:
         logging.info(f"verify feature cache for feature {label}")
         algo.cache.validate_df(
@@ -196,8 +217,8 @@ def cache_features(
                 overwrite=True)
             del dfst_feature
 
-    feature_params, labels = _get_feature_param_labels(feature_name)
-    do_cache(feature_params, labels, algo.feature.jitter.research.get_dfst_feature)
+    feature_params, labels, get_dfst_feature_func = _get_feature_param_labels_get_dfst_feature_func(feature_name)
+    do_cache(feature_params, labels, get_dfst_feature_func)
 
 
 def verify_trading_cache(
@@ -207,7 +228,7 @@ def verify_trading_cache(
     export_mode: market_data.ingest.bq.common.EXPORT_MODE,
     alpha_name: str,
 ) -> None:
-    _, _, labels = _get_trading_param_labels(alpha_name)
+    _, _, labels, _ = _get_trading_param_labels_get_dfst_trading_func(alpha_name)
     for label in labels:
         logging.info(f"verify trading cache for trading {label}")
         algo.cache.validate_df(
@@ -248,8 +269,8 @@ def cache_trading(
                 overwrite=True)
             del dfst_trading
 
-    trading_params, feature_labels, trading_labels = _get_trading_param_labels(alpha_name)
-    do_cache(trading_params, feature_labels, trading_labels, algo.alpha.jitter_recovery.research.get_dfst_trading)
+    trading_params, feature_labels, trading_labels, get_dfst_trading_func = _get_trading_param_labels_get_dfst_trading_func(alpha_name)
+    do_cache(trading_params, feature_labels, trading_labels, get_dfst_trading_func)
 
 
 def cache_all(
@@ -369,6 +390,18 @@ if __name__ == '__main__':
     if_verify_features = False
     if_cache_trading = False
     if_verify_trading = False
+    #run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+    feature_name='momentum'
+    alpha_name='momentum'
+    if_cache_features = False
+    if_verify_features = False
+    if_cache_trading = True
+    if_verify_trading = False
+    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+    date_str_from='2024-03-30'
+    date_str_to='2024-05-10'
     run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
     #run_binance(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
