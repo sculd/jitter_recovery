@@ -1,21 +1,21 @@
 import pandas as pd
 from collections import defaultdict
 import algo.feature.momentum.calculate
-import algo.alpha.momentum.calculate
+import algo.alpha.momentum_reversal.calculate
 import algo.feature.util.research
 import algo.feature.momentum.research
-from algo.alpha.momentum.calculate import MomentumTradingParam
+from algo.alpha.momentum_reversal.calculate import MomentumReversalTradingParam
 import matplotlib.pyplot as plt
 
 
-_trading_label_prefix = '(momentum_trading)'
+_trading_label_prefix = '(momentum_reversal_trading)'
 
-def get_trading_label_for_caching(trading_param: MomentumTradingParam, label_suffix=None) -> str:
+def get_trading_label_for_caching(trading_param: MomentumReversalTradingParam, label_suffix=None) -> str:
     r = algo.feature.util.research.get_param_label_for_caching(trading_param, _trading_label_prefix, label_suffix=label_suffix)
     return f'trading/{r}'
 
 
-def get_dfst_trading(dfst_feature, trading_param: MomentumTradingParam):
+def get_dfst_trading(dfst_feature, trading_param: MomentumReversalTradingParam):
     if 'rank' not in dfst_feature.columns:
         symbol_with_momentums = []
     else:
@@ -45,13 +45,13 @@ def get_dfst_trading(dfst_feature, trading_param: MomentumTradingParam):
 
 
 def add_trading_columns(df_feature, trading_param):
-    status = algo.alpha.momentum.calculate.Status()
+    status = algo.alpha.momentum_reversal.calculate.Status()
     trading_dict = defaultdict(list)
 
     for i in df_feature.index:
         features = df_feature.loc[i].to_dict()
         status.update(i, features, trading_param)
-        for k, v in {**features, **algo.alpha.momentum.calculate.status_as_dict(status)}.items():
+        for k, v in {**features, **algo.alpha.momentum_reversal.calculate.status_as_dict(status)}.items():
             trading_dict[k].append(v)
 
     df_feature_trading = pd.DataFrame(trading_dict, index=df_feature.index)
