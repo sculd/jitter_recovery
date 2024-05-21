@@ -29,10 +29,12 @@ import algo.alpha.jitter_recovery.calculate
 import algo.alpha.jitter_following.calculate
 import algo.alpha.collective_jitter_recovery.calculate
 import algo.alpha.momentum.calculate
+import algo.alpha.momentum_reversal.calculate
 import algo.alpha.jitter_recovery.research
 import algo.alpha.jitter_following.research
 import algo.alpha.collective_jitter_recovery.research
 import algo.alpha.momentum.research
+import algo.alpha.momentum_reversal.research
 import algo.cache
 
 
@@ -154,6 +156,24 @@ def _get_momentum_trading_param_labels_trading_func():
     return trading_params, collective_feature_labels, collective_trading_labels, algo.alpha.momentum.research.get_dfst_trading
 
 
+def _get_momentum_reversal_trading_param_labels_trading_func():
+    trading_params = [
+        algo.alpha.momentum_reversal.calculate.MomentumReversalTradingParam(
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=180, ema_window=30), selection_size=2, rebalance_interval_minutes=3*60,
+        ),
+        algo.alpha.momentum_reversal.calculate.MomentumReversalTradingParam(
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=360, ema_window=60), selection_size=2, rebalance_interval_minutes=6*60,
+        ),
+    ]
+    collective_feature_labels = [
+        algo.feature.momentum.research.get_feature_label_for_caching(param.feature_param) for param in trading_params
+    ]
+    collective_trading_labels = [
+        algo.alpha.momentum_reversal.research.get_trading_label_for_caching(param) for param in trading_params
+    ]
+    return trading_params, collective_feature_labels, collective_trading_labels, algo.alpha.momentum_reversal.research.get_dfst_trading
+
+
 def _get_trading_param_labels_get_dfst_trading_func(alpha_name: str):
     if alpha_name == 'jitter_reversal':
         return _get_jitter_trading_param_labels_trading_func()
@@ -163,6 +183,8 @@ def _get_trading_param_labels_get_dfst_trading_func(alpha_name: str):
         return _get_collective_trading_param_labels_trading_func()
     elif alpha_name == 'momentum':
         return _get_momentum_trading_param_labels_trading_func()
+    elif alpha_name == 'momentum_reversal':
+        return _get_momentum_reversal_trading_param_labels_trading_func()
     else:
         return [], []
 
@@ -385,16 +407,22 @@ def run_bithumb(date_str_from: str, date_str_to: str, feature_name: str, alpha_n
 if __name__ == '__main__':
     date_str_from='2024-03-01'
     date_str_to='2024-03-31'
+    feature_name='momentum'
+    alpha_name='momentum_reversal'
+    if_cache_features = False
+    if_verify_features = False
+    if_cache_trading = True
+    if_verify_trading = False
+
+    date_str_from='2024-04-01'
+    date_str_to='2024-05-10'
+    #run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    #run_bithumb(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+    #run_cex(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    #run_binance(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
     date_str_from='2024-03-30'
     date_str_to='2024-05-10'
-    feature_name='momentum'
-    alpha_name='momentum'
-    if_cache_features = True
-    if_verify_features = False
-    if_cache_trading = False
-    if_verify_trading = False
     run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-    #run_cex(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-    #run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-    #run_binance(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-    #run_bithumb(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
