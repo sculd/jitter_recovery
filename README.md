@@ -33,7 +33,8 @@ bittrex-global, maker 0.1%, taker 0.15%
 | bitmart       | not in ny | na          | na          |             |
 | bitget        | no        | 0.1         | 0.1         |             |
 | Bitmex        | no        | na          | na          |             |
-| bybit         | no        | na          | na          |             |
+| bybit         | no        | 0.02(perp)  | 0.055(perp) |             |
+| bybit         | no        | 0.10(spot)  | 0.10(spot)  |             |
 | Kraken        | not in ny | 0.16        | 0.26        | opening fee 0.02%, 0.02% per 4 hours in margin. |
 | okx           | no        | na          | na          |             |
 | woo x         | no        | na          | na          |             |
