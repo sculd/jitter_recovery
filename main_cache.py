@@ -60,9 +60,8 @@ def _get_collective_feature_param_labels_get_dfst_feature_func():
 
 def _get_momentum_feature_param_labels_get_dfst_feature_func():
     params = [
-        algo.feature.momentum.calculate.MomentumFeatureParam(120, 30),
-        algo.feature.momentum.calculate.MomentumFeatureParam(180, 30),
-        algo.feature.momentum.calculate.MomentumFeatureParam(360, 60),
+        algo.feature.momentum.calculate.MomentumFeatureParam(120, 30,
+            filter_out_non_gemini_symbol = True, filter_out_reportable_symbols = True),
     ]
     labels = [
         algo.feature.momentum.research.get_feature_label_for_caching(param) for param in params
@@ -78,7 +77,7 @@ def _get_feature_param_labels_get_dfst_feature_func(feature_name: str):
     elif feature_name == 'momentum':
         return _get_momentum_feature_param_labels_get_dfst_feature_func()
     else:
-        return [], []
+        return [], [], []
 
 
 def _get_jitter_trading_param_labels_trading_func():
@@ -141,37 +140,57 @@ def _get_collective_trading_param_labels_trading_func():
 def _get_momentum_trading_param_labels_trading_func():
     trading_params = [
         algo.alpha.momentum.calculate.MomentumTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=180, ema_window=30), selection_size=2, rebalance_interval_minutes=3*60,
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=360, ema_window=60,
+            filter_out_non_gemini_symbol = False, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=6*60,
         ),
         algo.alpha.momentum.calculate.MomentumTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=360, ema_window=60), selection_size=2, rebalance_interval_minutes=6*60,
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=180, ema_window=30,
+            filter_out_non_gemini_symbol = False, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=3*60,
         ),
     ]
-    collective_feature_labels = [
+    trading_params = [
+        algo.alpha.momentum.calculate.MomentumTradingParam(
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=120, ema_window=60,
+            filter_out_non_gemini_symbol = True, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=4*60,
+        ),
+        algo.alpha.momentum.calculate.MomentumTradingParam(
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=120, ema_window=30,
+            filter_out_non_gemini_symbol = True, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=1*60,
+        ),
+    ]
+    feature_labels = [
         algo.feature.momentum.research.get_feature_label_for_caching(param.feature_param) for param in trading_params
     ]
-    collective_trading_labels = [
+    trading_labels = [
         algo.alpha.momentum.research.get_trading_label_for_caching(param) for param in trading_params
     ]
-    return trading_params, collective_feature_labels, collective_trading_labels, algo.alpha.momentum.research.get_dfst_trading
+    return trading_params, feature_labels, trading_labels, algo.alpha.momentum.research.get_dfst_trading
 
 
 def _get_momentum_reversal_trading_param_labels_trading_func():
     trading_params = [
         algo.alpha.momentum_reversal.calculate.MomentumReversalTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=180, ema_window=30), selection_size=2, rebalance_interval_minutes=3*60,
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=360, ema_window=60,
+            filter_out_non_gemini_symbol = False, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=6*60,
         ),
         algo.alpha.momentum_reversal.calculate.MomentumReversalTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=360, ema_window=60), selection_size=2, rebalance_interval_minutes=6*60,
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=180, ema_window=30,
+            filter_out_non_gemini_symbol = False, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=3*60,
         ),
     ]
-    collective_feature_labels = [
+    trading_params = [
+        algo.alpha.momentum_reversal.calculate.MomentumReversalTradingParam(
+            algo.feature.momentum.calculate.MomentumFeatureParam(window=120, ema_window=30,
+            filter_out_non_gemini_symbol = True, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=1*60,
+        ),
+    ]
+    feature_labels = [
         algo.feature.momentum.research.get_feature_label_for_caching(param.feature_param) for param in trading_params
     ]
-    collective_trading_labels = [
+    trading_labels = [
         algo.alpha.momentum_reversal.research.get_trading_label_for_caching(param) for param in trading_params
     ]
-    return trading_params, collective_feature_labels, collective_trading_labels, algo.alpha.momentum_reversal.research.get_dfst_trading
+    return trading_params, feature_labels, trading_labels, algo.alpha.momentum_reversal.research.get_dfst_trading
 
 
 def _get_trading_param_labels_get_dfst_trading_func(alpha_name: str):
@@ -186,7 +205,7 @@ def _get_trading_param_labels_get_dfst_trading_func(alpha_name: str):
     elif alpha_name == 'momentum_reversal':
         return _get_momentum_reversal_trading_param_labels_trading_func()
     else:
-        return [], []
+        return [], [], [], []
 
 
 def verify_features_cache(
@@ -414,15 +433,20 @@ if __name__ == '__main__':
     if_cache_trading = True
     if_verify_trading = False
 
-    date_str_from='2024-04-01'
-    date_str_to='2024-05-10'
     #run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_bithumb(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-
     #run_cex(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_binance(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
-    date_str_from='2024-03-30'
+    date_str_from='2024-03-31'
+    date_str_to='2024-04-16'
+    run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+    date_str_from='2024-04-14'
+    date_str_to='2024-05-01'
+    run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+    date_str_from='2024-04-29'
     date_str_to='2024-05-10'
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
