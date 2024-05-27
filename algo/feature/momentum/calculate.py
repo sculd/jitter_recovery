@@ -6,16 +6,20 @@ from numba.experimental import jitclass
 
 default_window = 180
 default_ema_window = 60
+default_filter_out_non_gemini_symbol = False
+default_filter_out_reportable_symbols = False
 
 
 class MomentumFeatureParam:
-    def __init__(self, window: int, ema_window: int):
+    def __init__(self, window: int, ema_window: int, filter_out_non_gemini_symbol: bool, filter_out_reportable_symbols:bool):
         self.window = window
         self.ema_window = ema_window
+        self.filter_out_non_gemini_symbol = filter_out_non_gemini_symbol
+        self.filter_out_reportable_symbols = filter_out_reportable_symbols
 
     @staticmethod
     def get_default_param():
-        return MomentumFeatureParam(default_window, default_ema_window)
+        return MomentumFeatureParam(default_window, default_ema_window, default_filter_out_non_gemini_symbol, default_filter_out_reportable_symbols)
 
     def __str__(self):
         return ', '.join([f'{k}: {str(v)}' for k, v in vars(self).items()])

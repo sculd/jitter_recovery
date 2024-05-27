@@ -9,7 +9,13 @@ def _param_as_label(param):
     if _is_primitive(param):
         return str(param)
     # new directory is used to avoid the file name limit (256) violation.
-    return '/'.join([f'{k}({_param_as_label(v)})' for k, v in vars(param).items()])
+    d = {k: v for k, v in vars(param).items()}
+    # for backward compatibility
+    if 'filter_out_non_gemini_symbol' in d and not d['filter_out_non_gemini_symbol']:
+        del d['filter_out_non_gemini_symbol']
+    if 'filter_out_reportable_symbols' in d and not d['filter_out_reportable_symbols']:
+        del d['filter_out_reportable_symbols']
+    return '/'.join([f'{k}({_param_as_label(v)})' for k, v in d.items()])
 
 
 def get_param_label_for_caching(param, label_prefix, label_suffix=None) -> str:

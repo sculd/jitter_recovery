@@ -2,13 +2,13 @@ import pandas as pd
 from collections import defaultdict
 import algo.feature.momentum.calculate
 import algo.feature.util.research
+import algo.util.symbol_filter
 from algo.feature.momentum.calculate import MomentumFeatureParam
 
 
 _feature_label_prefix = '(momentum)'
 
-def get_feature_label_for_caching(feature_param: MomentumFeatureParam,
-                                  label_suffix=None) -> str:
+def get_feature_label_for_caching(feature_param: MomentumFeatureParam, label_suffix=None) -> str:
     r = algo.feature.util.research.get_param_label_for_caching(feature_param, _feature_label_prefix, label_suffix=label_suffix)
     return f'feature/{r}'
 
@@ -18,8 +18,17 @@ def _get_usdt_symbol_filter():
 
 
 def get_dfst_feature(df, feature_param: MomentumFeatureParam, symbol_filter=None, value_column='close'):
+    if feature_param.filter_out_non_gemini_symbol:
+        print(f'before filtering out any symbols: {len(df.symbol.unique())}')
+        df = algo.util.symbol_filter.filter_out_non_gemini_symbol(df)
+        print(f'after filtering out non-gemini symbols: {len(df.symbol.unique())}')
+    if feature_param.filter_out_reportable_symbols:
+        df = algo.util.symbol_filter.filter_out_reportable_symbols(df)
+        print(f'after filtering out reportable symbols: {len(df.symbol.unique())}')
+
     dfi = df.set_index(['timestamp', 'symbol'])
     all_symbols = df.symbol.unique()
+    print(f'before applying the symbol_filter: {len(all_symbols)}')
     if symbol_filter is None:
         symbol_filter = _get_usdt_symbol_filter()
     all_symbols = [s for s in all_symbols if symbol_filter(s)]
