@@ -53,6 +53,10 @@ class TradeExecution:
         self.closed_execution_records = trading.execution.ClosedExecutionRecords()
         self.init_inst_data()
         self.close_open_positions()
+        self.is_dry_run = False
+
+    def enable_dry_run(self, enable=True):
+        self.is_dry_run = enable
 
     def init_inst_data(self):
         public_data_api = PublicData.PublicAPI(flag=_flag)
@@ -129,21 +133,24 @@ class TradeExecution:
 
         record = trading.execution.ExecutionRecord(epoch_seconds, symbol, price, sz, side, direction)
         self.execution_records.append_record(record)
-        
-        result = trade_api.place_order(
-            instId=symbol, tdMode="isolated", 
-            side="buy" if side >= 0 else "sell",
-            posSide="long" if side >= 0 else "short",
-            ordType="market",
-            # multiple of ctVal instrument property
-            sz=str(abs(sz)),
-        )
-        logging.info(f'place order result:\n{result}')
 
-        if result["code"] == "0":
-            logging.info(f'Successful order request, order_id: {result["data"][0]["ordId"]}')
+        if not self.is_dry_run:
+            logging.info("in dryrun mode, not actually make the order requests.")
         else:
-            logging.error(f'Unsuccessful order request, error_code = {result["data"][0]["sCode"]}, Error_message = {result["data"][0]["sMsg"]}')
+            result = trade_api.place_order(
+                instId=symbol, tdMode="isolated",
+                side="buy" if side >= 0 else "sell",
+                posSide="long" if side >= 0 else "short",
+                ordType="market",
+                # multiple of ctVal instrument property
+                sz=str(abs(sz)),
+            )
+            logging.info(f'place order result:\n{result}')
+
+            if result["code"] == "0":
+                logging.info(f'Successful order request, order_id: {result["data"][0]["ordId"]}')
+            else:
+                logging.error(f'Unsuccessful order request, error_code = {result["data"][0]["sCode"]}, Error_message = {result["data"][0]["sMsg"]}')
 
         self.closed_execution_records.enter(record)
         self.direction_per_symbol[symbol] = 1
@@ -178,15 +185,18 @@ class TradeExecution:
             logging.error(f'Can not find the position for {symbol}, something is wrong.')
             return
 
-        result = trade_api.close_positions(
-            symbol, 'isolated', 
-            posSide=position_data['posSide'], ccy='')
-        logging.info(f'close order result:\n{result}')
-
-        if result["code"] == "0":
-            logging.info("Successful order close request")
+        if not self.is_dry_run:
+            logging.info("in dryrun mode, not actually make the order requests.")
         else:
-            logging.error(f"Unsuccessful order request {result}")
+            result = trade_api.close_positions(
+                symbol, 'isolated',
+                posSide=position_data['posSide'], ccy='')
+            logging.info(f'close order result:\n{result}')
+
+            if result["code"] == "0":
+                logging.info("Successful order close request")
+            else:
+                logging.error(f"Unsuccessful order request {result}")
 
         side = 1 if position_data['posSide'] == 'long' else -1
         record = trading.execution.ExecutionRecord(epoch_seconds, symbol, price, 0, side, direction)
