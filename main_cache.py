@@ -424,8 +424,8 @@ def run_bithumb(date_str_from: str, date_str_to: str, feature_name: str, alpha_n
 
 
 if __name__ == '__main__':
-    date_str_from='2024-03-01'
-    date_str_to='2024-03-31'
+    date_str_from='2024-06-20'
+    date_str_to='2024-07-21'
     feature_name='collective_jitter'
     alpha_name='collective_jitter'
     if_cache_features = True
@@ -437,12 +437,5 @@ if __name__ == '__main__':
     #run_bithumb(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_cex(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_binance(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-
-    date_str_from='2024-04-29'
-    date_str_to='2024-05-13'
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-
-    date_str_from='2024-05-11'
-    date_str_to='2024-05-25'
     run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
