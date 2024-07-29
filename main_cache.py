@@ -423,9 +423,20 @@ def run_bithumb(date_str_from: str, date_str_to: str, feature_name: str, alpha_n
     )
 
 
+def run_equity(date_str_from: str, date_str_to: str, feature_name: str, alpha_name: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
+    cache_all(
+        date_str_from=date_str_from, date_str_to=date_str_to,
+        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.EQUITY,
+        export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        feature_name=feature_name, alpha_name=alpha_name,
+        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
+        symbol_filter=lambda s: True
+    )
+
+
 if __name__ == '__main__':
     date_str_from='2024-06-20'
-    date_str_to='2024-07-21'
+    date_str_to='2024-06-24'
     feature_name='collective_jitter'
     alpha_name='collective_jitter'
     if_cache_features = True
@@ -437,5 +448,10 @@ if __name__ == '__main__':
     #run_bithumb(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_cex(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_binance(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    #run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+
+    date_str_from='2022-06-20'
+    date_str_to='2022-06-24'
+    run_equity(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
