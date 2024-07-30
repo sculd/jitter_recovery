@@ -440,9 +440,9 @@ if __name__ == '__main__':
     feature_name='collective_jitter'
     alpha_name='collective_jitter'
     if_cache_features = True
-    if_verify_features = False
+    if_verify_features = True
     if_cache_trading = True
-    if_verify_trading = False
+    if_verify_trading = True
 
     #run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
     #run_bithumb(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
@@ -451,7 +451,7 @@ if __name__ == '__main__':
     #run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
 
-    date_str_from='2022-06-20'
+    date_str_from='2022-06-21'
     date_str_to='2022-06-24'
     run_equity(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
