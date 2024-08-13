@@ -439,9 +439,9 @@ if __name__ == '__main__':
     date_str_to='2024-06-24'
     feature_name='jitter'
     alpha_name='jitter_reversal'
-    if_cache_features = True
+    if_cache_features = False
     if_verify_features = True
-    if_cache_trading = True
+    if_cache_trading = False
     if_verify_trading = True
 
     #run_gemini(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
