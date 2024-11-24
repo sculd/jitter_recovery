@@ -134,7 +134,7 @@ class TradeExecution:
         record = trading.execution.ExecutionRecord(epoch_seconds, symbol, price, sz, side, direction)
         self.execution_records.append_record(record)
 
-        if not self.is_dry_run:
+        if self.is_dry_run:
             logging.info("in dryrun mode, not actually make the order requests.")
         else:
             result = trade_api.place_order(
@@ -185,7 +185,7 @@ class TradeExecution:
             logging.error(f'Can not find the position for {symbol}, something is wrong.')
             return
 
-        if not self.is_dry_run:
+        if self.is_dry_run:
             logging.info("in dryrun mode, not actually make the order requests.")
         else:
             result = trade_api.close_positions(
