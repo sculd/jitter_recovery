@@ -23,12 +23,12 @@ logging.info(f"### starting a new okx live at {datetime.datetime.now()}")
 import publish.telegram
 publish.telegram.post_message(f"starting a new okx collective live at {datetime.datetime.now()}")
 
-trade_execution = trading.execution_okx.TradeExecution(target_betsize=30, leverage=10)
+trade_execution = trading.execution_okx.TradeExecution(target_betsize=50, leverage=10)
 trade_execution.enable_dry_run(enable=False)
 trading_param = algo.alpha.collective_jitter_recovery.calculate.CollectiveRecoveryTradingParam.get_default_param()
 trading_manager = algo.alpha.collective_jitter_recovery.trade.TradeManager(trade_execution=trade_execution, trading_param=trading_param)
 
-trade_execution_small_drop = trading.execution_okx.TradeExecution(target_betsize=30, leverage=10)
+trade_execution_small_drop = trading.execution_okx.TradeExecution(target_betsize=50, leverage=10)
 trade_execution_small_drop.enable_dry_run(enable=False)
 trading_param_small_drop = algo.alpha.collective_jitter_recovery.calculate.CollectiveRecoveryTradingParam.get_default_param_small_drop()
 trading_manager_small_drop = algo.alpha.collective_jitter_recovery.trade.TradeManager(trade_execution=trade_execution_small_drop, trading_param=trading_param_small_drop)
