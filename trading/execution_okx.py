@@ -50,6 +50,7 @@ class TradeExecution:
         self.leverage = leverage
         self.direction_per_symbol = defaultdict(int)
         self.execution_records = trading.execution.ExecutionRecords()
+        self.closed_execution_records_per_symbol = defaultdict(trading.execution.ClosedExecutionRecords)
         self.closed_execution_records = trading.execution.ClosedExecutionRecords()
         self.init_inst_data()
         self.close_open_positions()
@@ -152,6 +153,7 @@ class TradeExecution:
             else:
                 logging.error(f'Unsuccessful order request, error_code = {result["data"][0]["sCode"]}, Error_message = {result["data"][0]["sMsg"]}')
 
+        self.closed_execution_records_per_symbol[symbol].enter(record)
         self.closed_execution_records.enter(record)
         self.direction_per_symbol[symbol] = 1
 
@@ -201,7 +203,8 @@ class TradeExecution:
         side = 1 if position_data['posSide'] == 'long' else -1
         record = trading.execution.ExecutionRecord(epoch_seconds, symbol, price, 0, side, direction)
         self.execution_records.append_record(record)
-        closed_record = trading.execution.ClosedExecutionRecord(self.closed_execution_records.enter_record, record)
+        closed_record = trading.execution.ClosedExecutionRecord(self.closed_execution_records_per_symbol[symbol].enter_record, record)
+        self.closed_execution_records_per_symbol[symbol].closed_records.append(closed_record)
         self.closed_execution_records.closed_records.append(closed_record)
         message = f'at {epoch_seconds}, for {symbol}, closed: {closed_record}, trades pairs: {len(self.closed_execution_records.closed_records)}, cum_pnl: {self.closed_execution_records.get_cum_pnl()}'
         logging.info(message)

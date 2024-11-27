@@ -42,7 +42,8 @@ class ClosedExecutionRecord:
     def __str__(self):
         return f'enter {self.record_enter}\nexit {self.record_exit}\nduration: {int((self.record_exit.epoch_seconds - self.record_enter.epoch_seconds) / 60)} minutes, profit: {self.get_profit()}, pnl: {self.get_pnl()}'
 
-    def to_csv_header():
+    @classmethod
+    def to_csv_header(cls):
         return ExecutionRecord.to_csv_header(prefix="enter_") + ',' + ExecutionRecord.to_csv_header(prefix="exit_") + ',pnl,duration_mins'
 
     def to_csv_line(self):
