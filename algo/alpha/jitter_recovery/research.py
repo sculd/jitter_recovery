@@ -7,7 +7,7 @@ import algo.feature.jitter.research
 from algo.alpha.jitter_recovery.calculate import JitterRecoveryTradingParam
 
 
-_trading_label_prefix = '(changes_trading)'
+_trading_label_prefix = '(changes_recovery_trading)'
 
 def get_trading_label_for_caching(trading_param: JitterRecoveryTradingParam, label_suffix=None) -> str:
     r = algo.feature.util.research.get_param_label_for_caching(trading_param, _trading_label_prefix, label_suffix=label_suffix)
@@ -19,10 +19,9 @@ def get_dfst_trading(dfst_feature, trading_param: JitterRecoveryTradingParam):
         symbol_with_jumps = []
     else:
         symbol_with_jumps = dfst_feature[
-            (dfst_feature.ch_max > trading_param.jump_threshold)
-            & (dfst_feature.ch_since_max < trading_param.drop_from_jump_threshold)
-            & (dfst_feature.distance_max_ch < 10)
-            & (dfst_feature.distance_max_ch > 2)
+            (
+                (dfst_feature.ch_max > abs(trading_param.jump_threshold)) | (dfst_feature.ch_min < -abs(trading_param.jump_threshold))
+            )
             ].index.get_level_values('symbol').unique().values
 
     print(f'symbol_with_jumps: {len((symbol_with_jumps))}')
