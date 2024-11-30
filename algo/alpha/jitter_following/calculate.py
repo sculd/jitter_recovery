@@ -41,7 +41,7 @@ class Status:
 
     def update(self, features, trading_param: JitterFollowingTradingParam) -> None:
         value = features['value']
-        if self.in_position == 1:
+        if self.in_position != 0:
             if value < self.lowest_since_enter:
                 self.lowest_since_enter = value
 
@@ -53,21 +53,33 @@ class Status:
             self.ch_from_lowest_since_enter = algo.feature.jitter.calculate._get_ch(self.lowest_since_enter, value)
             self.ch_from_highest_since_enter = algo.feature.jitter.calculate._get_ch(self.highest_since_enter, value)
 
-            if self.ch_from_highest_since_enter < -0.01:
-                self.in_position = 0
+            if self.in_position == -1:
+                if self.ch_from_highest_since_enter < -abs(trading_param.exit_drop_threshold):
+                    self.in_position = 0
+                if self.ch_from_enter < -abs(trading_param.exit_drop_threshold):
+                    self.in_position = 0
 
-            if self.ch_from_enter < -0.01:
-                #if self.ch_from_enter < trading_param.exit_drop_threshold:
-                self.in_position = 0
+                if self.ch_from_enter > abs(trading_param.exit_drop_threshold):
+                    self.in_position = 0
 
-            if self.ch_from_enter >= 0.10:
-                self.in_position = 0
+            elif self.in_position == +1:
+                if self.ch_from_lowest_since_enter > abs(trading_param.exit_drop_threshold):
+                    self.in_position = 0
+                if self.ch_from_enter > abs(trading_param.exit_drop_threshold):
+                    self.in_position = 0
+
+                if self.ch_from_enter < -abs(trading_param.exit_drop_threshold):
+                    self.in_position = 0
+
         else:
-            should_enter_position = features['ch_max'] > trading_param.jump_threshold \
-            and features['distance_max_ch'] < 1
+            new_position = 0
+            if features['ch_max'] > trading_param.jump_threshold and features['distance_max_ch'] < 1:
+                new_position = +1
+            elif features['ch_min'] < -trading_param.jump_threshold and features['distance_max_ch'] < 1:
+                new_position = -1
 
-            if should_enter_position:
-                self.in_position = 1
+            if new_position != 0:
+                self.in_position = new_position
                 self.value_at_enter = value
                 self.lowest_since_enter = value
                 self.timedelta_since_position_enter = 0

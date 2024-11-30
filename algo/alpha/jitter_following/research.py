@@ -20,8 +20,7 @@ def get_dfst_trading(dfst_feature, trading_param: JitterFollowingTradingParam):
         symbol_with_jumps = []
     else:
         symbol_with_jumps = dfst_feature[
-            (dfst_feature.ch_max > trading_param.jump_threshold)
-            & (dfst_feature.distance_max_ch > 2)
+            ((dfst_feature.ch_max > trading_param.jump_threshold) | (dfst_feature.ch_min < -abs(trading_param.jump_threshold)))
             ].index.get_level_values('symbol').unique().values
 
     print(f'symbol_with_jumps: {len((symbol_with_jumps))}')
