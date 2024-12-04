@@ -34,7 +34,7 @@ def investigate_symbol(df, symbol_investigate, add_feature_columns_func, add_tra
 
     figsize = figsize if figsize else (6, 9)
     fig, (ax_close, ax_volume, ax_profit, ax_chs, ax_in_position, ax_profit_in_position) = plt.subplots(6, figsize=figsize)
-    ax_close.plot(dfs[['close']])
+    ax_close.plot(df_trading[['value']])
 
     ymin, ymax = df_trading[['value']].min(), df_trading[['value']].max()
     ax_close.vlines(x=list(df_trading[df_trading.position_changed == +1].index), ymin=ymin, ymax=ymax, color='b',
@@ -43,7 +43,7 @@ def investigate_symbol(df, symbol_investigate, add_feature_columns_func, add_tra
               linestyles='dashed', label='exit')
 
     ax_volume.plot(dfs[['volume']])
-    ax_profit.plot(df_trading[df_trading.in_position != 0][['profit']].cumsum())
+    ax_profit.plot(df_trading[['profit']].cumsum())
     trading_columns = ['ch_max', 'ch_min']
     if 'ch_since_max' in df_trading.columns:
         trading_columns.append('ch_since_max')
@@ -64,7 +64,7 @@ def investigate_symbol(df, symbol_investigate, add_feature_columns_func, add_tra
     i_head = df_trading.index.get_loc(indices_position_changed[0])
     i_tail = df_trading.index.get_loc(indices_position_changed[-1])
     if not hasattr(trading_param, 'is_long_term') or not trading_param.is_long_term:
-        df_plot = df_trading.iloc[max(0, i_head - 1 * 60):i_tail + 1 * 60]
+        df_plot = df_trading.iloc[max(0, i_head - 1 * 10):i_tail + 1 * 10]
     else:
         df_plot = df_trading.iloc[max(i_head - 12 * 60, 0):i_tail + 12 * 60]
     ax = df_plot[['value']].plot(figsize=(figsize[0], 2))

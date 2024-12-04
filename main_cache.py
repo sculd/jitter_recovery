@@ -378,7 +378,7 @@ if __name__ == '__main__':
     if_cache_trading = False
     if_verify_trading = False
 
-    date_str_from='2024-11-20'
+    date_str_from='2024-11-10'
     date_str_to='2024-11-21'
     run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 

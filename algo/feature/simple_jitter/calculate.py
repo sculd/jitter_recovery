@@ -67,8 +67,11 @@ def get_changes_1dim(values, window: int):
             v_ch_min_is_to = last_v
             avg_v_before_min_ch = avg_v
 
-    past_v = values[0]
-    expected_v = first_v + (first_v - past_v)
+    smooth_window = 3
+    smooth_window_half = smooth_window // 2
+    past_v_smoothed = sum(values[:smooth_window]) / smooth_window
+    first_v_smoothed = sum(values[-window - smooth_window_half:-window + smooth_window - smooth_window_half]) / smooth_window
+    expected_v = first_v_smoothed + (first_v_smoothed - past_v_smoothed)
 
     return {
         'value': values[-1],

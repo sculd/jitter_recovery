@@ -47,13 +47,20 @@ class Status:
     def update(self, timestamp: pd.Timestamp, features, trading_param: JitterSimpleReversalTradingParam) -> None:
         value = features['value']
 
-        if self.ch_max_threshold_crossed:
-            if features['ch_max'] > self.highest_ch_max_since_ch_max_threshold_crossed:
-                self.highest_ch_max_since_ch_max_threshold_crossed = features['ch_max']
+        def update_highest_lowest():
+            update_unit = abs(trading_param.drop_from_jump_threshold)
+            if features['ch_max'] >= self.highest_ch_max_since_ch_max_threshold_crossed + update_unit:
+                delta = features['ch_max'] - self.highest_ch_max_since_ch_max_threshold_crossed
+                delta = int(delta / update_unit) * update_unit
+                self.highest_ch_max_since_ch_max_threshold_crossed += delta
+            if features['ch_min'] <= self.lowest_ch_min_since_ch_min_threshold_crossed - update_unit:
+                delta = self.lowest_ch_min_since_ch_min_threshold_crossed - features['ch_min']
+                delta = int(delta / update_unit) * update_unit
+                self.lowest_ch_min_since_ch_min_threshold_crossed -= delta
 
-        if self.ch_min_threshold_crossed:
-            if features['ch_min'] < self.lowest_ch_min_since_ch_min_threshold_crossed:
-                self.lowest_ch_min_since_ch_min_threshold_crossed = features['ch_min']
+        if self.ch_max_threshold_crossed or self.ch_min_threshold_crossed:
+            update_highest_lowest()
+
 
         if self.in_position != 0:
             if value < self.lowest_since_enter:
@@ -102,20 +109,28 @@ class Status:
         else:
             new_position = 0
 
-            if features['ch_max'] > abs(trading_param.jump_threshold):
+            if features['ch_max'] > abs(trading_param.jump_threshold) and not self.ch_max_threshold_crossed and \
+                features['value'] > features['expected_v'] * (1. + abs(trading_param.jump_threshold)):
                 self.ch_max_threshold_crossed = True
-                self.highest_ch_max_since_ch_max_threshold_crossed = features['ch_max']
+                update_highest_lowest()
 
-            if features['ch_min'] < -abs(trading_param.jump_threshold):
+            if features['ch_min'] < -abs(trading_param.jump_threshold) and not self.ch_min_threshold_crossed and \
+                features['value'] < features['expected_v'] * (1. - abs(trading_param.jump_threshold)):
                 self.ch_min_threshold_crossed = True
-                self.lowest_ch_min_since_ch_min_threshold_crossed = features['ch_min']
+                update_highest_lowest()
 
-            #if self.ch_max_threshold_crossed and features['ch_max'] < self.highest_ch_max_since_ch_max_threshold_crossed:
-            if self.ch_max_threshold_crossed and features['ch_max'] < abs(trading_param.jump_threshold) and features['ch_min'] < -abs(trading_param.drop_from_jump_threshold):
+            #if self.ch_max_threshold_crossed and features['ch_max'] < abs(trading_param.jump_threshold) and features['ch_min'] < -abs(trading_param.drop_from_jump_threshold):
+            if self.ch_max_threshold_crossed and \
+                    features['ch_max'] < self.highest_ch_max_since_ch_max_threshold_crossed -abs(trading_param.drop_from_jump_threshold) and \
+                    features['ch_min'] < -abs(trading_param.drop_from_jump_threshold) and \
+                features['value'] > features['expected_v'] * (1. + abs(trading_param.jump_threshold)):
                 new_position = -1
 
-            #if self.ch_min_threshold_crossed and features['ch_min'] > self.lowest_ch_min_since_ch_min_threshold_crossed:
-            if self.ch_min_threshold_crossed and features['ch_min'] > -abs(trading_param.jump_threshold) and features['ch_max'] > abs(trading_param.drop_from_jump_threshold):
+            #if self.ch_min_threshold_crossed and features['ch_min'] > -abs(trading_param.jump_threshold) and features['ch_max'] > abs(trading_param.drop_from_jump_threshold):
+            if self.ch_min_threshold_crossed and \
+                    features['ch_min'] > self.lowest_ch_min_since_ch_min_threshold_crossed + abs(trading_param.drop_from_jump_threshold) and \
+                    features['ch_max'] > abs(trading_param.drop_from_jump_threshold) and \
+                features['value'] < features['expected_v'] * (1. - abs(trading_param.jump_threshold)):
                 new_position = 1
 
             if new_position != 0:
