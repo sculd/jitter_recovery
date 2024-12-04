@@ -20,17 +20,21 @@ import market_data.ingest.bq.common
 import market_data.ingest.bq.cache
 import market_data.ingest.bq.validate
 import algo.feature.jitter.calculate
+import algo.feature.simple_jitter.calculate
 import algo.feature.collective_jitter.calculate
 import algo.feature.momentum.calculate
 import algo.feature.jitter.research
+import algo.feature.simple_jitter.research
 import algo.feature.collective_jitter.research
 import algo.feature.momentum.research
 import algo.alpha.jitter_recovery.calculate
+import algo.alpha.jitter_simple_reversal.calculate
 import algo.alpha.jitter_following.calculate
 import algo.alpha.collective_jitter_recovery.calculate
 import algo.alpha.momentum.calculate
 import algo.alpha.momentum_reversal.calculate
 import algo.alpha.jitter_recovery.research
+import algo.alpha.jitter_simple_reversal.research
 import algo.alpha.jitter_following.research
 import algo.alpha.collective_jitter_recovery.research
 import algo.alpha.momentum.research
@@ -49,6 +53,15 @@ def _get_jitter_feature_param_labels_get_dfst_feature_func():
     ]
     return params, labels, algo.feature.jitter.research.get_dfst_feature
 
+def _get_simple_jitter_feature_param_labels_get_dfst_feature_func():
+    params = [
+        algo.feature.simple_jitter.calculate.SimpleJitterFeatureParam(30),
+    ]
+    labels = [
+        algo.feature.simple_jitter.research.get_feature_label_for_caching(param) for param in params
+    ]
+    return params, labels, algo.feature.simple_jitter.research.get_dfst_feature
+
 def _get_collective_feature_param_labels_get_dfst_feature_func():
     collective_params = [
         algo.feature.collective_jitter.calculate.CollectiveJitterFeatureParam(window=40, collective_window=30),
@@ -58,29 +71,19 @@ def _get_collective_feature_param_labels_get_dfst_feature_func():
     ]
     return collective_params, collective_labels, algo.feature.collective_jitter.research.get_dfst_feature
 
-def _get_momentum_feature_param_labels_get_dfst_feature_func():
-    params = [
-        algo.feature.momentum.calculate.MomentumFeatureParam(120, 30,
-            filter_out_non_gemini_symbol = True, filter_out_reportable_symbols = True),
-    ]
-    labels = [
-        algo.feature.momentum.research.get_feature_label_for_caching(param) for param in params
-    ]
-    return params, labels, algo.feature.momentum.research.get_dfst_feature
-
 
 def _get_feature_param_labels_get_dfst_feature_func(feature_name: str):
     if feature_name == 'jitter':
         return _get_jitter_feature_param_labels_get_dfst_feature_func()
+    elif feature_name == 'simple_jitter':
+        return _get_simple_jitter_feature_param_labels_get_dfst_feature_func()
     elif feature_name == 'collective_jitter':
         return _get_collective_feature_param_labels_get_dfst_feature_func()
-    elif feature_name == 'momentum':
-        return _get_momentum_feature_param_labels_get_dfst_feature_func()
     else:
         return [], [], []
 
 
-def _get_jitter_trading_param_labels_trading_func():
+def _get_jitter_reserval_trading_param_labels_trading_func():
     params = [
         algo.alpha.jitter_recovery.calculate.JitterRecoveryTradingParam(
             algo.feature.jitter.calculate.JitterFeatureParam(30),
@@ -95,28 +98,19 @@ def _get_jitter_trading_param_labels_trading_func():
     return params, feature_labels, trading_labels, algo.alpha.jitter_recovery.research.get_dfst_trading
 
 
-def _get_jitter_following_trading_param_labels_trading_func():
+def _get_jitter_simple_reserval_trading_param_labels_trading_func():
     params = [
-        algo.alpha.jitter_following.calculate.JitterFollowingTradingParam(
+        algo.alpha.jitter_simple_reversal.calculate.JitterSimpleReversalTradingParam(
             algo.feature.jitter.calculate.JitterFeatureParam(30),
-            0.15, -0.02),
-        algo.alpha.jitter_following.calculate.JitterFollowingTradingParam(
-            algo.feature.jitter.calculate.JitterFeatureParam(30),
-            0.20, -0.02),
-        algo.alpha.jitter_following.calculate.JitterFollowingTradingParam(
-            algo.feature.jitter.calculate.JitterFeatureParam(30),
-            0.15, -0.01),
-        algo.alpha.jitter_following.calculate.JitterFollowingTradingParam(
-            algo.feature.jitter.calculate.JitterFeatureParam(30),
-            0.20, -0.01),
+            jump_threshold=0.18, drop_from_jump_threshold=-0.02),
     ]
     feature_labels = [
         algo.feature.jitter.research.get_feature_label_for_caching(param.feature_param) for param in params
     ]
     trading_labels = [
-        algo.alpha.jitter_following.research.get_trading_label_for_caching(param) for param in params
+        algo.alpha.jitter_simple_reversal.research.get_trading_label_for_caching(param) for param in params
     ]
-    return params, feature_labels, trading_labels, algo.alpha.jitter_following.research.get_dfst_trading
+    return params, feature_labels, trading_labels, algo.alpha.jitter_simple_reversal.research.get_dfst_trading
 
 
 def _get_collective_trading_param_labels_trading_func():
@@ -137,73 +131,13 @@ def _get_collective_trading_param_labels_trading_func():
     return collective_params, collective_feature_labels, collective_trading_labels, algo.alpha.collective_jitter_recovery.research.get_dfst_trading
 
 
-def _get_momentum_trading_param_labels_trading_func():
-    trading_params = [
-        algo.alpha.momentum.calculate.MomentumTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=360, ema_window=60,
-            filter_out_non_gemini_symbol = False, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=6*60,
-        ),
-        algo.alpha.momentum.calculate.MomentumTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=180, ema_window=30,
-            filter_out_non_gemini_symbol = False, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=3*60,
-        ),
-    ]
-    trading_params = [
-        algo.alpha.momentum.calculate.MomentumTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=120, ema_window=60,
-            filter_out_non_gemini_symbol = True, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=4*60,
-        ),
-        algo.alpha.momentum.calculate.MomentumTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=120, ema_window=30,
-            filter_out_non_gemini_symbol = True, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=1*60,
-        ),
-    ]
-    feature_labels = [
-        algo.feature.momentum.research.get_feature_label_for_caching(param.feature_param) for param in trading_params
-    ]
-    trading_labels = [
-        algo.alpha.momentum.research.get_trading_label_for_caching(param) for param in trading_params
-    ]
-    return trading_params, feature_labels, trading_labels, algo.alpha.momentum.research.get_dfst_trading
-
-
-def _get_momentum_reversal_trading_param_labels_trading_func():
-    trading_params = [
-        algo.alpha.momentum_reversal.calculate.MomentumReversalTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=360, ema_window=60,
-            filter_out_non_gemini_symbol = False, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=6*60,
-        ),
-        algo.alpha.momentum_reversal.calculate.MomentumReversalTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=180, ema_window=30,
-            filter_out_non_gemini_symbol = False, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=3*60,
-        ),
-    ]
-    trading_params = [
-        algo.alpha.momentum_reversal.calculate.MomentumReversalTradingParam(
-            algo.feature.momentum.calculate.MomentumFeatureParam(window=120, ema_window=30,
-            filter_out_non_gemini_symbol = True, filter_out_reportable_symbols = True), selection_size=1, rebalance_interval_minutes=1*60,
-        ),
-    ]
-    feature_labels = [
-        algo.feature.momentum.research.get_feature_label_for_caching(param.feature_param) for param in trading_params
-    ]
-    trading_labels = [
-        algo.alpha.momentum_reversal.research.get_trading_label_for_caching(param) for param in trading_params
-    ]
-    return trading_params, feature_labels, trading_labels, algo.alpha.momentum_reversal.research.get_dfst_trading
-
-
 def _get_trading_param_labels_get_dfst_trading_func(alpha_name: str):
     if alpha_name == 'jitter_reversal':
-        return _get_jitter_trading_param_labels_trading_func()
-    elif alpha_name == 'jitter_following':
-        return _get_jitter_following_trading_param_labels_trading_func()
+        return _get_jitter_reserval_trading_param_labels_trading_func()
+    elif alpha_name == 'jitter_simple_reversal':
+        return _get_jitter_simple_reserval_trading_param_labels_trading_func()
     elif alpha_name == 'collective_jitter':
         return _get_collective_trading_param_labels_trading_func()
-    elif alpha_name == 'momentum':
-        return _get_momentum_trading_param_labels_trading_func()
-    elif alpha_name == 'momentum_reversal':
-        return _get_momentum_reversal_trading_param_labels_trading_func()
     else:
         return [], [], [], []
 
@@ -328,6 +262,7 @@ def cache_all(
     symbol_filter=lambda s: s.endswith('USD'),
     value_column='close',
 ):
+    print(f"{date_str_from=} {date_str_to=}")
     aggregation_mode = market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST
     market_data.ingest.bq.cache.fetch_and_cache(
         date_str_from=date_str_from, date_str_to=date_str_to,
@@ -435,17 +370,31 @@ def run_equity(date_str_from: str, date_str_to: str, feature_name: str, alpha_na
 
 
 if __name__ == '__main__':
-    date_str_from='2024-09-29'
-    date_str_to='2024-10-16'
-    feature_name='jitter'
-    alpha_name='jitter_reversal'
+    feature_name='simple_jitter'
+    alpha_name='jitter_simple_reversal'
+    print(f"{feature_name=} {alpha_name=}")
     if_cache_features = True
     if_verify_features = True
-    if_cache_trading = True
-    if_verify_trading = True
+    if_cache_trading = False
+    if_verify_trading = False
 
+    date_str_from='2024-11-20'
+    date_str_to='2024-11-21'
     run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
-    feature_name='collective_jitter'
-    alpha_name='collective_jitter'
+    date_str_from='2024-11-01'
+    date_str_to='2024-11-10'
     run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+    date_str_from='2024-10-20'
+    date_str_to='2024-10-31'
+    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+    date_str_from='2024-10-10'
+    date_str_to='2024-10-21'
+    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+    date_str_from='2024-10-01'
+    date_str_to='2024-10-11'
+    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
