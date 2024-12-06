@@ -128,9 +128,10 @@ class TradeExecution:
         # ctVal is the unit of the coin per 1 sz
         contract_val = float(self.inst_data[symbol]['ctVal'])
         sz_target = self.target_betsize / price / contract_val
-        sz = int(sz_target)
+        sz_target_leveraged = sz_target * self.leverage
+        sz = int(sz_target_leveraged)
 
-        logging.info(f'for {symbol}, target sz: {sz_target}, actual sz: {sz}, delta: {sz - sz_target}, contract_val: {contract_val}')
+        logging.info(f'for {symbol}, target sz: {sz_target}, actual sz: {sz} (leveraged by {self.leverage}), delta: {sz - sz_target}, contract_val: {contract_val}')
 
         record = trading.execution.ExecutionRecord(epoch_seconds, symbol, price, sz, side, direction)
         self.execution_records.append_record(record)
