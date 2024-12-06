@@ -21,7 +21,7 @@ bittrex-global, maker 0.1%, taker 0.15%
 | exchange      | available | maker       | taker       | etc         |
 | ------------- | --------- | ----------- | ----------- | ----------- |
 | bitfinex      | kr,not us | 0.1         | 0.2         |             |
-| poloniex      | yes       | 0.2         | 0.2         |             |
+| poloniex      | kr,not us | 0.2         | 0.2         |             |
 | bithumb       | na        | 0.04        | 0.25        | btc market free fee! |
 | cex.io        | yes       | 0.15        | 0.25        |             |
 | gemini        | yes       | 0.10        | 0.30        |             |
