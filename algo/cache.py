@@ -27,19 +27,6 @@ _gcs_bucket = _storage_client.bucket(_gcs_bucket_name)
 _timestamp_index_name = 'timestamp'
 
 
-def _get_filename(label: str, t_id: str, t_from: datetime.datetime, t_to: datetime.datetime) -> str:
-    feature_dir = os.path.join(_cache_base_path, label)
-    t_str_from = t_from.strftime("%Y-%m-%dT%H:%M:%S%z")
-    t_str_to = t_to.strftime("%Y-%m-%dT%H:%M:%S%z")
-    r = os.path.join(feature_dir, f"{t_id}/{t_str_from}_{t_str_to}.parquet")
-    dir = os.path.dirname(r)
-    try:
-        os.makedirs(dir, exist_ok=True)
-    except FileExistsError:
-        pass
-
-    return r
-
 def _get_gcsblobname(label: str, t_id: str, t_from: datetime.datetime, t_to: datetime.datetime) -> str:
     t_str_from = t_from.strftime("%Y-%m-%dT%H:%M:%S%z")
     t_str_to = t_to.strftime("%Y-%m-%dT%H:%M:%S%z")
@@ -84,7 +71,7 @@ def _cache_df_daily(df_daily: pd.DataFrame, label: str, t_id: str, overwrite=Tru
     t_begin = market_data.ingest.bq.cache.anchor_to_begin_of_day(timestamps[0])
     t_end = market_data.ingest.bq.cache.anchor_to_begin_of_day(t_begin + _cache_interval)
 
-    filename = _get_filename(label, t_id, t_begin, t_end)
+    filename = market_data.ingest.bq.cache.to_filename(_cache_base_path, label, t_id, t_begin, t_end)
     if os.path.exists(filename):
         logging.info(f"{filename} already exists.")
         if overwrite:
@@ -133,7 +120,7 @@ def _read_df_daily(
     if not market_data.ingest.bq.cache.is_exact_cache_interval(t_from, t_to):
         logging.info(f"{t_from} to {t_to} do not match a full day thus will not read from the cache.")
         return None
-    filename = _get_filename(label, t_id, t_from, t_to)
+    filename = market_data.ingest.bq.cache.to_filename(_cache_base_path, label, t_id, t_from, t_to)
     if not os.path.exists(filename):
         blob_name = _get_gcsblobname(label, t_id, t_from, t_to)
         blob_exist = storage.Blob(bucket=_gcs_bucket, name=blob_name).exists(_storage_client)
@@ -232,7 +219,7 @@ def validate_df(
     t_ranges = market_data.ingest.bq.cache.split_t_range(t_from, t_to)
     for t_range in t_ranges:
         t_from, t_to = t_range[0], t_range[-1]
-        filename = _get_filename(label, t_id, t_from, t_to)
+        filename = market_data.ingest.bq.cache.to_filename(_cache_base_path, label, t_id, t_from, t_to)
         if not os.path.exists(filename):
             blob_name = _get_gcsblobname(label, t_id, t_from, t_to)
             blob_exist = storage.Blob(bucket=_gcs_bucket, name=blob_name).exists(_storage_client)
