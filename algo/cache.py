@@ -90,8 +90,8 @@ def _cache_df_daily(df_daily: pd.DataFrame, label: str, t_id: str, overwrite=Tru
         logging.info(f"df_daily is empty thus will be skipped.")
         return
     timestamps = df_daily.index.get_level_values(_timestamp_index_name).unique()
-    t_begin = market_data.ingest.bq.cache._anchor_to_begin_of_day(timestamps[0])
-    t_end = market_data.ingest.bq.cache._anchor_to_begin_of_day(t_begin + _cache_interval)
+    t_begin = market_data.ingest.bq.cache.anchor_to_begin_of_day(timestamps[0])
+    t_end = market_data.ingest.bq.cache.anchor_to_begin_of_day(t_begin + _cache_interval)
 
     filename = _get_filename(label, t_id, t_begin, t_end)
     if os.path.exists(filename):
