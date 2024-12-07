@@ -45,15 +45,6 @@ def _get_gcsblobname(label: str, t_id: str, t_from: datetime.datetime, t_to: dat
     t_str_to = t_to.strftime("%Y-%m-%dT%H:%M:%S%z")
     return os.path.join(label, f"{t_id}/{t_str_from}_{t_str_to}.parquet")
 
-def _timestamp_covers_full_day(first_t: datetime.datetime, last_t: datetime.datetime, grace_period: datetime.timedelta=_full_day_check_grace_period) -> bool:
-    def _is_t_begin_of_day(t) -> bool:
-        return t - datetime.datetime(year=t.year, month=t.month, day=t.day, hour=0, minute=0, second=0, tzinfo=t.tzinfo) <= grace_period
-
-    def _is_t_end_of_day(t) -> bool:
-        return datetime.datetime(year=t.year, month=t.month, day=t.day, hour=23, minute=59, second=0, tzinfo=t.tzinfo) - t <= grace_period
-
-    return _is_t_begin_of_day(first_t) and _is_t_end_of_day(last_t)
-
 
 def _timerange_str_for_timerange(first_t: datetime.datetime, last_t: datetime.datetime) -> str:
     def _date_str_from_t(t) -> str:
@@ -139,7 +130,7 @@ def _read_df_daily(
         t_to: datetime.datetime,
         columns: typing.List[str] = None,
 ) -> typing.Optional[pd.DataFrame]:
-    if not market_data.ingest.bq.cache._is_exact_cache_interval(t_from, t_to):
+    if not market_data.ingest.bq.cache.is_exact_cache_interval(t_from, t_to):
         logging.info(f"{t_from} to {t_to} do not match a full day thus will not read from the cache.")
         return None
     filename = _get_filename(label, t_id, t_from, t_to)
