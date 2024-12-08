@@ -14,11 +14,10 @@ load_dotenv()  # take environment variables from .env.
 
 import trading.execution_okx
 
-trade_execution = trading.execution_okx.TradeExecution(100, 5)
+trade_execution = trading.execution_okx.TradeExecution(30, 5)
 
 
 trade_execution.enter('GMX-USDT-SWAP', 60, -1)
-
 
 time.sleep(3)
 

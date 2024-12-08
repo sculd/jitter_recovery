@@ -378,6 +378,18 @@ if __name__ == '__main__':
     if_cache_trading = False
     if_verify_trading = False
 
+
+    date_str_from='2024-07-01'
+    date_str_to='2024-07-16'
+    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+    date_str_from='2024-07-15'
+    date_str_to='2024-07-31'
+    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+
+    exit(0)
+
+    '''
     date_str_from='2024-11-10'
     date_str_to='2024-11-21'
     run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
@@ -397,4 +409,4 @@ if __name__ == '__main__':
     date_str_from='2024-10-01'
     date_str_to='2024-10-11'
     run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-
+    #'''
