@@ -113,6 +113,7 @@ def _download_gcs_blob(source_blob_name, destination_file_name):
 def _read_df_daily(
         label: str,
         t_id: str,
+        aggregation_mode: market_data.ingest.bq.common.AGGREGATION_MODE,
         t_from: datetime.datetime,
         t_to: datetime.datetime,
         columns: typing.List[str] = None,
@@ -120,7 +121,7 @@ def _read_df_daily(
     if not market_data.ingest.bq.cache.is_exact_cache_interval(t_from, t_to):
         logging.info(f"{t_from} to {t_to} do not match a full day thus will not read from the cache.")
         return None
-    filename = market_data.ingest.bq.cache.to_filename(_cache_base_path, label, t_id, t_from, t_to)
+    filename = market_data.ingest.bq.cache.to_filename(_cache_base_path, label, t_id, aggregation_mode, t_from, t_to)
     if not os.path.exists(filename):
         blob_name = _get_gcsblobname(label, t_id, t_from, t_to)
         blob_exist = storage.Blob(bucket=_gcs_bucket, name=blob_name).exists(_storage_client)
@@ -163,6 +164,7 @@ def read_df(
         label: str,
         dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
         export_mode: market_data.ingest.bq.common.EXPORT_MODE,
+        aggregation_mode: market_data.ingest.bq.common.AGGREGATION_MODE,
         t_from: datetime.datetime = None,
         t_to: datetime.datetime = None,
         epoch_seconds_from: int = None,
@@ -183,7 +185,7 @@ def read_df(
     t_ranges = market_data.ingest.bq.cache.split_t_range(t_from, t_to)
     df_concat = None
     for t_range in t_ranges:
-        df_cache = _read_df_daily(label, t_id, t_range[0], t_range[-1], columns=columns)
+        df_cache = _read_df_daily(label, t_id, aggregation_mode, t_range[0], t_range[-1], columns=columns)
         if df_cache is None:
             logging.info(f"df_cache is None for {t_range}")
             continue
