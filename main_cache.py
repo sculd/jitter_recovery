@@ -39,7 +39,6 @@ import algo.alpha.jitter_following.research
 import algo.alpha.collective_jitter_recovery.research
 import algo.alpha.momentum.research
 import algo.alpha.momentum_reversal.research
-import algo.cache
 
 
 def _get_jitter_feature_param_labels_get_dfst_feature_func():
@@ -152,7 +151,7 @@ def verify_features_cache(
     _, labels, _ = _get_feature_param_labels_get_dfst_feature_func(feature_name)
     for label in labels:
         logging.info(f"verify feature cache for feature {label}")
-        algo.cache.validate_df(
+        market_data.ingest.bq.cache.validate_df(
             label=label,
             date_str_from=date_str_from,
             date_str_to=date_str_to,
@@ -166,13 +165,14 @@ def cache_features(
     date_str_to: str,
     dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
     export_mode: market_data.ingest.bq.common.EXPORT_MODE,
+    aggregation_mode: market_data.ingest.bq.common.AGGREGATION_MODE,
     feature_name: str,
     symbol_filter=None, value_column='close',
 ) -> None:
     df = market_data.ingest.bq.cache.read_from_cache(
         dataset_mode,
         export_mode,
-        market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST,
+        aggregation_mode,
         date_str_from=date_str_from, date_str_to=date_str_to)
 
     if df is None:
@@ -184,11 +184,12 @@ def cache_features(
         for feature_param, label in zip(feature_params, labels):
             logging.info(f"for {label}")
             dfst_feature = get_dfst_feature_func(df, feature_param, symbol_filter=symbol_filter, value_column=value_column)
-            algo.cache.cache_df(
+            market_data.ingest.bq.cache.cache_df(
                 dfst_feature,
                 label=label,
                 dataset_mode=dataset_mode,
                 export_mode=export_mode,
+                aggregation_mode=aggregation_mode,
                 overwrite=True)
             del dfst_feature
 
@@ -206,12 +207,12 @@ def verify_trading_cache(
     _, _, labels, _ = _get_trading_param_labels_get_dfst_trading_func(alpha_name)
     for label in labels:
         logging.info(f"verify trading cache for trading {label}")
-        algo.cache.validate_df(
+        market_data.ingest.bq.cache.validate_df(
             label=label,
-            date_str_from=date_str_from,
-            date_str_to=date_str_to,
             dataset_mode=dataset_mode,
             export_mode=export_mode,
+            date_str_from=date_str_from,
+            date_str_to=date_str_to,
         )
 
 
@@ -220,15 +221,17 @@ def cache_trading(
     date_str_to: str,
     dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
     export_mode: market_data.ingest.bq.common.EXPORT_MODE,
+    aggregation_mode: market_data.ingest.bq.common.AGGREGATION_MODE,
     alpha_name: str,
 ) -> None:
     def do_cache(trading_params, feature_labels, trading_labels, get_dfst_trading_func):
         for trading_param, feature_label, trading_label in zip(trading_params, feature_labels, trading_labels):
             logging.info(f"for {trading_label}")
-            dfst_feature = algo.cache.read_df(
-                label=feature_label,
+            dfst_feature = market_data.ingest.bq.cache.read_from_cache(
                 dataset_mode=dataset_mode,
                 export_mode=export_mode,
+                aggregation_mode=aggregation_mode,
+                label=feature_label,
                 date_str_from=date_str_from,
                 date_str_to=date_str_to)
             if dfst_feature is None:
@@ -236,11 +239,12 @@ def cache_trading(
                 continue
             dfst_trading = get_dfst_trading_func(dfst_feature, trading_param)
             del dfst_feature
-            algo.cache.cache_df(
+            market_data.ingest.bq.cache.cache_df(
                 dfst_trading,
                 label=trading_label,
                 dataset_mode=dataset_mode,
                 export_mode=export_mode,
+                aggregation_mode=aggregation_mode,
                 overwrite=True)
             del dfst_trading
 
@@ -279,6 +283,7 @@ def cache_all(
         cache_features(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
+            aggregation_mode=market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST,
             feature_name=feature_name,
             symbol_filter=symbol_filter, value_column=value_column,
         )
@@ -294,6 +299,7 @@ def cache_all(
         cache_trading(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
+            aggregation_mode=market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST,
             alpha_name=alpha_name,
         )
 
