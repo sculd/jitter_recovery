@@ -18,7 +18,7 @@ logging.basicConfig(
 
 import market_data.ingest.bq.common
 import market_data.ingest.bq.cache
-import market_data.ingest.bq.validate
+import algo.cache
 import algo.feature.jitter.calculate
 import algo.feature.simple_jitter.calculate
 import algo.feature.collective_jitter.calculate
@@ -82,7 +82,7 @@ def _get_feature_param_labels_get_dfst_feature_func(feature_name: str):
         return [], [], []
 
 
-def _get_jitter_reserval_trading_param_labels_trading_func():
+def _get_jitter_reversal_trading_param_labels_trading_func():
     params = [
         algo.alpha.jitter_recovery.calculate.JitterRecoveryTradingParam(
             algo.feature.jitter.calculate.JitterFeatureParam(30),
@@ -97,7 +97,7 @@ def _get_jitter_reserval_trading_param_labels_trading_func():
     return params, feature_labels, trading_labels, algo.alpha.jitter_recovery.research.get_dfst_trading
 
 
-def _get_jitter_simple_reserval_trading_param_labels_trading_func():
+def _get_jitter_simple_reversal_trading_param_labels_trading_func():
     params = [
         algo.alpha.jitter_simple_reversal.calculate.JitterSimpleReversalTradingParam(
             algo.feature.jitter.calculate.JitterFeatureParam(30),
@@ -132,124 +132,13 @@ def _get_collective_trading_param_labels_trading_func():
 
 def _get_trading_param_labels_get_dfst_trading_func(alpha_name: str):
     if alpha_name == 'jitter_reversal':
-        return _get_jitter_reserval_trading_param_labels_trading_func()
+        return _get_jitter_reversal_trading_param_labels_trading_func()
     elif alpha_name == 'jitter_simple_reversal':
-        return _get_jitter_simple_reserval_trading_param_labels_trading_func()
+        return _get_jitter_simple_reversal_trading_param_labels_trading_func()
     elif alpha_name == 'collective_jitter':
         return _get_collective_trading_param_labels_trading_func()
     else:
         return [], [], [], []
-
-
-def verify_features_cache(
-    date_str_from: str,
-    date_str_to: str,
-    dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
-    export_mode: market_data.ingest.bq.common.EXPORT_MODE,
-    feature_name: str,
-) -> None:
-    _, labels, _ = _get_feature_param_labels_get_dfst_feature_func(feature_name)
-    for label in labels:
-        logging.info(f"verify feature cache for feature {label}")
-        market_data.ingest.bq.cache.validate_df(
-            label=label,
-            date_str_from=date_str_from,
-            date_str_to=date_str_to,
-            dataset_mode=dataset_mode,
-            export_mode=export_mode,
-        )
-
-
-def cache_features(
-    date_str_from: str,
-    date_str_to: str,
-    dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
-    export_mode: market_data.ingest.bq.common.EXPORT_MODE,
-    aggregation_mode: market_data.ingest.bq.common.AGGREGATION_MODE,
-    feature_name: str,
-    symbol_filter=None, value_column='close',
-) -> None:
-    df = market_data.ingest.bq.cache.read_from_cache(
-        dataset_mode,
-        export_mode,
-        aggregation_mode,
-        date_str_from=date_str_from, date_str_to=date_str_to)
-
-    if df is None:
-        return
-
-    df = df.reset_index()
-
-    def do_cache(feature_params, labels, get_dfst_feature_func):
-        for feature_param, label in zip(feature_params, labels):
-            logging.info(f"for {label}")
-            dfst_feature = get_dfst_feature_func(df, feature_param, symbol_filter=symbol_filter, value_column=value_column)
-            market_data.ingest.bq.cache.cache_df(
-                dfst_feature,
-                label=label,
-                dataset_mode=dataset_mode,
-                export_mode=export_mode,
-                aggregation_mode=aggregation_mode,
-                overwrite=True)
-            del dfst_feature
-
-    feature_params, labels, get_dfst_feature_func = _get_feature_param_labels_get_dfst_feature_func(feature_name)
-    do_cache(feature_params, labels, get_dfst_feature_func)
-
-
-def verify_trading_cache(
-    date_str_from: str,
-    date_str_to: str,
-    dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
-    export_mode: market_data.ingest.bq.common.EXPORT_MODE,
-    alpha_name: str,
-) -> None:
-    _, _, labels, _ = _get_trading_param_labels_get_dfst_trading_func(alpha_name)
-    for label in labels:
-        logging.info(f"verify trading cache for trading {label}")
-        market_data.ingest.bq.cache.validate_df(
-            label=label,
-            dataset_mode=dataset_mode,
-            export_mode=export_mode,
-            date_str_from=date_str_from,
-            date_str_to=date_str_to,
-        )
-
-
-def cache_trading(
-    date_str_from: str,
-    date_str_to: str,
-    dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
-    export_mode: market_data.ingest.bq.common.EXPORT_MODE,
-    aggregation_mode: market_data.ingest.bq.common.AGGREGATION_MODE,
-    alpha_name: str,
-) -> None:
-    def do_cache(trading_params, feature_labels, trading_labels, get_dfst_trading_func):
-        for trading_param, feature_label, trading_label in zip(trading_params, feature_labels, trading_labels):
-            logging.info(f"for {trading_label}")
-            dfst_feature = market_data.ingest.bq.cache.read_from_cache(
-                dataset_mode=dataset_mode,
-                export_mode=export_mode,
-                aggregation_mode=aggregation_mode,
-                label=feature_label,
-                date_str_from=date_str_from,
-                date_str_to=date_str_to)
-            if dfst_feature is None:
-                logging.error(f"feature for {feature_label} can not be found in the cache.")
-                continue
-            dfst_trading = get_dfst_trading_func(dfst_feature, trading_param)
-            del dfst_feature
-            market_data.ingest.bq.cache.cache_df(
-                dfst_trading,
-                label=trading_label,
-                dataset_mode=dataset_mode,
-                export_mode=export_mode,
-                aggregation_mode=aggregation_mode,
-                overwrite=True)
-            del dfst_trading
-
-    trading_params, feature_labels, trading_labels, get_dfst_trading_func = _get_trading_param_labels_get_dfst_trading_func(alpha_name)
-    do_cache(trading_params, feature_labels, trading_labels, get_dfst_trading_func)
 
 
 def cache_all(
@@ -259,6 +148,8 @@ def cache_all(
     export_mode: market_data.ingest.bq.common.EXPORT_MODE,
     feature_name: str,
     alpha_name: str,
+    if_cache_market_data=False,
+    if_verify_market_data=False,
     if_cache_features=False,
     if_verify_features=False,
     if_cache_trading=False,
@@ -268,46 +159,61 @@ def cache_all(
 ):
     print(f"{date_str_from=} {date_str_to=}")
     aggregation_mode = market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST
-    market_data.ingest.bq.cache.fetch_and_cache(
-        date_str_from=date_str_from, date_str_to=date_str_to,
-        dataset_mode=dataset_mode, export_mode=export_mode,
-        aggregation_mode=aggregation_mode,
-    )
-    market_data.ingest.bq.validate.verify_data_cache(
-        date_str_from=date_str_from, date_str_to=date_str_to,
-        dataset_mode=dataset_mode, export_mode=export_mode,
-        aggregation_mode=aggregation_mode,
-    )
+
+    if if_cache_market_data:
+        market_data.ingest.bq.cache.query_and_cache(
+            date_str_from=date_str_from, date_str_to=date_str_to,
+            dataset_mode=dataset_mode, export_mode=export_mode,
+            aggregation_mode=aggregation_mode,
+            label=market_data.ingest.bq.cache._label_market_data,
+        )
+
+    if if_verify_market_data:
+        algo.cache.verify_cache(
+            date_str_from=date_str_from, date_str_to=date_str_to,
+            dataset_mode=dataset_mode, export_mode=export_mode,
+            labels=[market_data.ingest.bq.cache._label_market_data],
+        )
 
     if if_cache_features:
-        cache_features(
+        feature_params, labels, get_dfst_feature_func = _get_feature_param_labels_get_dfst_feature_func(feature_name)
+        algo.cache.cache_features(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
             aggregation_mode=market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST,
-            feature_name=feature_name,
-            symbol_filter=symbol_filter, value_column=value_column,
+            feature_params=feature_params,
+            labels=labels,
+            get_dfst_feature_func=get_dfst_feature_func,
+            symbol_filter=symbol_filter,
+            value_column=value_column,
         )
 
     if if_verify_features:
-        verify_features_cache(
+        _, labels, _ = _get_feature_param_labels_get_dfst_feature_func(feature_name)
+        algo.cache.verify_cache(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
-            feature_name=feature_name,
+            labels=labels,
         )
 
     if if_cache_trading:
-        cache_trading(
+        trading_params, feature_labels, trading_labels, get_dfst_trading_func = _get_trading_param_labels_get_dfst_trading_func(alpha_name)
+        algo.cache.cache_trading(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
             aggregation_mode=market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST,
-            alpha_name=alpha_name,
+            trading_params = trading_params,
+            feature_labels = feature_labels,
+            trading_labels = trading_labels,
+            get_dfst_trading_func = get_dfst_trading_func,
         )
 
     if if_verify_trading:
-        verify_trading_cache(
+        _, _, trading_labels, _ = _get_trading_param_labels_get_dfst_trading_func(alpha_name)
+        algo.cache.verify_cache(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
-            alpha_name=alpha_name,
+            labels=trading_labels,
         )
 
 
@@ -379,6 +285,8 @@ if __name__ == '__main__':
     feature_name='simple_jitter'
     alpha_name='jitter_simple_reversal'
     print(f"{feature_name=} {alpha_name=}")
+    if_cache_market_data = True
+    if_verify_market_data = True
     if_cache_features = True
     if_verify_features = True
     if_cache_trading = False
