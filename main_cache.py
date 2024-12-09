@@ -1,3 +1,4 @@
+import datetime
 import logging, sys, os
 
 
@@ -18,6 +19,7 @@ logging.basicConfig(
 
 import market_data.ingest.bq.common
 import market_data.ingest.bq.cache
+import market_data.ingest.util.time
 import algo.cache
 import algo.feature.jitter.calculate
 import algo.feature.simple_jitter.calculate
@@ -239,6 +241,41 @@ def run_for(
         if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
         symbol_filter=symbol_filter
     )
+
+
+def run_for_multiple_batches(
+        date_str_from: str, date_str_to: str,
+        dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
+        batch_size_days: int,
+        export_mode: market_data.ingest.bq.common.EXPORT_MODE,
+        feature_name: str, alpha_name: str,
+        if_cache_market_data = False, if_verify_market_data = False,
+        if_cache_features=False, if_cache_trading=False,
+        if_verify_features=False, if_verify_trading=False,
+        symbol_filter=lambda s: s.endswith('USDT-SWAP'),
+):
+    t_from, t_to = market_data.ingest.util.time.to_t(date_str_from=date_str_from, date_str_to=date_str_to)
+    t_head = t_from
+    t_tail = t_to
+    while True:
+        t_tail = min(t_to, t_tail)
+
+        cache_all(
+            date_str_from=t_head.strftime("%Y-%m-%d"), date_str_to=t_tail.strftime("%Y-%m-%d"),
+            dataset_mode=dataset_mode,
+            export_mode=export_mode,
+            feature_name=feature_name, alpha_name=alpha_name,
+            if_cache_market_data=if_cache_market_data, if_verify_market_data=if_verify_market_data,
+            if_cache_features=if_cache_features, if_cache_trading=if_cache_trading,
+            if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
+            symbol_filter=symbol_filter
+        )
+
+        if t_tail >= t_to:
+            break
+
+        t_head = t_tail
+        t_tail = t_head + datetime.timedelta(days=batch_size_days)
 
 
 if __name__ == '__main__':
