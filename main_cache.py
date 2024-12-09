@@ -161,7 +161,7 @@ def cache_all(
     aggregation_mode = market_data.ingest.bq.common.AGGREGATION_MODE.TAKE_LASTEST
 
     if if_cache_market_data:
-        market_data.ingest.bq.cache.query_and_cache(
+        market_data.ingest.bq.cache.read_from_cache_or_query_and_cache(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
             aggregation_mode=aggregation_mode,
@@ -227,7 +227,9 @@ def run_for(
         feature_name: str, alpha_name: str,
         if_cache_market_data = False, if_verify_market_data = False,
         if_cache_features=False, if_cache_trading=False,
-        if_verify_features=False, if_verify_trading=False):
+        if_verify_features=False, if_verify_trading=False,
+        symbol_filter=lambda s: s.endswith('USDT-SWAP'),
+):
     cache_all(
         date_str_from=date_str_from, date_str_to=date_str_to,
         dataset_mode=dataset_mode,
@@ -235,7 +237,7 @@ def run_for(
         feature_name=feature_name, alpha_name=alpha_name,
         if_cache_market_data=if_cache_market_data, if_verify_market_data=if_verify_market_data,
         if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
-        symbol_filter=lambda s: s.endswith('-USDT-SWAP')
+        symbol_filter=symbol_filter
     )
 
 
@@ -255,13 +257,17 @@ if __name__ == '__main__':
     run_for(
         date_str_from=date_str_from, date_str_to=date_str_to,
         dataset_mode=market_data.ingest.bq.common.DATASET_MODE.OKX, export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
-        feature_name=feature_name, alpha_name=alpha_name, if_cache_market_data=if_cache_market_data, if_verify_market_data=if_verify_market_data, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+        feature_name=feature_name, alpha_name=alpha_name, if_cache_market_data=if_cache_market_data, if_verify_market_data=if_verify_market_data, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
+        symbol_filter=lambda s: s.endswith('USDT-SWAP'),
+    )
 
     date_str_from='2024-11-29'
     date_str_to='2024-12-07'
     run_for(
         date_str_from=date_str_from, date_str_to=date_str_to,
         dataset_mode=market_data.ingest.bq.common.DATASET_MODE.OKX, export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
-        feature_name=feature_name, alpha_name=alpha_name, if_cache_market_data=if_cache_market_data, if_verify_market_data=if_verify_market_data, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+        feature_name=feature_name, alpha_name=alpha_name, if_cache_market_data=if_cache_market_data, if_verify_market_data=if_verify_market_data, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
+        symbol_filter=lambda s: s.endswith('USDT-SWAP'),
+    )
 
     exit(0)
