@@ -1,26 +1,10 @@
 import logging
 import typing
 import types
-import sys
-import os
 
 import market_data.ingest.bq.cache
 import market_data.ingest.bq.common
 import market_data.ingest.util.time
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
-)
-
-if os.path.exists('credential.json'):
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(os.getcwd(), 'credential.json')
-    os.environ["GOOGLE_CLOUD_PROJECT"] = "trading-290017"
-else:
-    print('the credential.json file does not exist')
 
 
 def verify_cache(
@@ -28,6 +12,7 @@ def verify_cache(
     date_str_to: str,
     dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
     export_mode: market_data.ingest.bq.common.EXPORT_MODE,
+    aggregation_mode: market_data.ingest.bq.common.AGGREGATION_MODE,
     labels: typing.List[str],
 ) -> None:
     for label in labels:
@@ -38,6 +23,7 @@ def verify_cache(
             date_str_to=date_str_to,
             dataset_mode=dataset_mode,
             export_mode=export_mode,
+            aggregation_mode=aggregation_mode,
         )
 
 

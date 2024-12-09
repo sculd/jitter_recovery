@@ -135,7 +135,7 @@ def _get_trading_param_labels_get_dfst_trading_func(alpha_name: str):
         return _get_jitter_reversal_trading_param_labels_trading_func()
     elif alpha_name == 'jitter_simple_reversal':
         return _get_jitter_simple_reversal_trading_param_labels_trading_func()
-    elif alpha_name == 'collective_jitter':
+    elif alpha_name == 'collective_jitter_reversal':
         return _get_collective_trading_param_labels_trading_func()
     else:
         return [], [], [], []
@@ -172,6 +172,7 @@ def cache_all(
         algo.cache.verify_cache(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
+            aggregation_mode=aggregation_mode,
             labels=[market_data.ingest.bq.cache._label_market_data],
         )
 
@@ -193,6 +194,7 @@ def cache_all(
         algo.cache.verify_cache(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
+            aggregation_mode=aggregation_mode,
             labels=labels,
         )
 
@@ -213,114 +215,53 @@ def cache_all(
         algo.cache.verify_cache(
             date_str_from=date_str_from, date_str_to=date_str_to,
             dataset_mode=dataset_mode, export_mode=export_mode,
+            aggregation_mode=aggregation_mode,
             labels=trading_labels,
         )
 
 
-def run_okx(date_str_from: str, date_str_to: str, feature_name: str, alpha_name: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
+def run_for(
+        date_str_from: str, date_str_to: str,
+        dataset_mode: market_data.ingest.bq.common.DATASET_MODE,
+        export_mode: market_data.ingest.bq.common.EXPORT_MODE,
+        feature_name: str, alpha_name: str,
+        if_cache_market_data = False, if_verify_market_data = False,
+        if_cache_features=False, if_cache_trading=False,
+        if_verify_features=False, if_verify_trading=False):
     cache_all(
         date_str_from=date_str_from, date_str_to=date_str_to,
-        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.OKX,
-        export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        dataset_mode=dataset_mode,
+        export_mode=export_mode,
         feature_name=feature_name, alpha_name=alpha_name,
+        if_cache_market_data=if_cache_market_data, if_verify_market_data=if_verify_market_data,
         if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
         symbol_filter=lambda s: s.endswith('-USDT-SWAP')
     )
 
 
-def run_binance(date_str_from: str, date_str_to: str, feature_name: str, alpha_name: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
-    cache_all(
-        date_str_from=date_str_from, date_str_to=date_str_to,
-        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.BINANCE,
-        export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
-        feature_name=feature_name, alpha_name=alpha_name,
-        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
-        symbol_filter=lambda s: s.endswith('-USDT')
-    )
-
-
-def run_cex(date_str_from: str, date_str_to: str, feature_name: str, alpha_name: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
-    cache_all(
-        date_str_from=date_str_from, date_str_to=date_str_to,
-        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.CEX,
-        export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
-        feature_name=feature_name, alpha_name=alpha_name,
-        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
-    )
-
-
-def run_gemini(date_str_from: str, date_str_to: str, feature_name: str, alpha_name: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
-    cache_all(
-        date_str_from=date_str_from, date_str_to=date_str_to,
-        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.GEMINI,
-        export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
-        feature_name=feature_name, alpha_name=alpha_name,
-        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
-    )
-
-
-def run_bithumb(date_str_from: str, date_str_to: str, feature_name: str, alpha_name: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
-    cache_all(
-        date_str_from=date_str_from, date_str_to=date_str_to,
-        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.BITHUMB,
-        export_mode=market_data.ingest.bq.common.EXPORT_MODE.ORDERBOOK_LEVEL1,
-        feature_name=feature_name, alpha_name=alpha_name,
-        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
-        symbol_filter=lambda s: s.endswith('-KRW'), value_column='price_ask',
-    )
-
-
-def run_equity(date_str_from: str, date_str_to: str, feature_name: str, alpha_name: str, if_cache_features=False, if_cache_trading=False, if_verify_features=False, if_verify_trading=False):
-    cache_all(
-        date_str_from=date_str_from, date_str_to=date_str_to,
-        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.EQUITY,
-        export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
-        feature_name=feature_name, alpha_name=alpha_name,
-        if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading,
-        symbol_filter=lambda s: True
-    )
-
-
 if __name__ == '__main__':
-    feature_name='simple_jitter'
-    alpha_name='jitter_simple_reversal'
+    feature_name='collective_jitter'
+    alpha_name='collective_jitter_reversal'
     print(f"{feature_name=} {alpha_name=}")
     if_cache_market_data = True
     if_verify_market_data = True
     if_cache_features = True
     if_verify_features = True
-    if_cache_trading = False
-    if_verify_trading = False
+    if_cache_trading = True
+    if_verify_trading = True
 
+    date_str_from='2024-11-21'
+    date_str_to='2024-11-30'
+    run_for(
+        date_str_from=date_str_from, date_str_to=date_str_to,
+        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.OKX, export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        feature_name=feature_name, alpha_name=alpha_name, if_cache_market_data=if_cache_market_data, if_verify_market_data=if_verify_market_data, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
-    date_str_from='2024-07-01'
-    date_str_to='2024-07-16'
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-
-    date_str_from='2024-07-15'
-    date_str_to='2024-07-31'
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
+    date_str_from='2024-11-29'
+    date_str_to='2024-12-07'
+    run_for(
+        date_str_from=date_str_from, date_str_to=date_str_to,
+        dataset_mode=market_data.ingest.bq.common.DATASET_MODE.OKX, export_mode=market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE,
+        feature_name=feature_name, alpha_name=alpha_name, if_cache_market_data=if_cache_market_data, if_verify_market_data=if_verify_market_data, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
 
     exit(0)
-
-    '''
-    date_str_from='2024-11-10'
-    date_str_to='2024-11-21'
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-
-    date_str_from='2024-11-01'
-    date_str_to='2024-11-10'
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-
-    date_str_from='2024-10-20'
-    date_str_to='2024-10-31'
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-
-    date_str_from='2024-10-10'
-    date_str_to='2024-10-21'
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-
-    date_str_from='2024-10-01'
-    date_str_to='2024-10-11'
-    run_okx(date_str_from=date_str_from, date_str_to=date_str_to, feature_name=feature_name, alpha_name=alpha_name, if_cache_features=if_cache_features, if_cache_trading=if_cache_trading, if_verify_features=if_verify_features, if_verify_trading=if_verify_trading)
-    #'''
