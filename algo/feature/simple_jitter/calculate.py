@@ -1,5 +1,6 @@
 import pandas as pd, numpy as np
 from collections import defaultdict
+import algo.feature.util.jitter_common
 import numba
 from numba import njit
 
@@ -16,12 +17,6 @@ class SimpleJitterFeatureParam:
 
     def __str__(self):
         return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
-
-@njit
-def _get_ch(v1: float, v2: float) -> float:
-    if v1 == 0:
-        return 0
-    return (v2 - v1) / v1
 
 
 @njit
@@ -50,8 +45,8 @@ def get_changes_1dim(values, window: int):
         sum_v += v
         avg_v = sum_v * 1.0 / (i + 1)
 
-        ch_jump = _get_ch(min_v, last_v)
-        ch_drop = _get_ch(max_v, last_v)
+        ch_jump = algo.feature.util.jitter_common.get_ch(min_v, last_v)
+        ch_drop = algo.feature.util.jitter_common.get_ch(max_v, last_v)
 
         d = l - 1 - i
 
@@ -75,7 +70,7 @@ def get_changes_1dim(values, window: int):
 
     return {
         'value': values[-1],
-        'ch': _get_ch(values[0], values[-1]),
+        'ch': algo.feature.util.jitter_common.get_ch(values[0], values[-1]),
         'ch_max': ch_max, 'ch_min': ch_min,
         'avg_v_before_max_ch': avg_v_before_max_ch,
         'avg_v_before_min_ch': avg_v_before_min_ch,
@@ -91,10 +86,4 @@ def get_feature_df(dfs, feature_param, value_column='close'):
     full_window = feature_param.window * 2
     rows = [get_changes_1dim(np.array([v[0] for v in df_.to_numpy(dtype=np.float64)], dtype=np.float64), feature_param.window) for df_ in
          dfs[[value_column]].rolling(full_window, min_periods=full_window)]
-    null_row_vals = {}
-    for r in rows:
-        if r is None: continue
-        null_row_vals = {k: None for k in r.keys()}
-        break
-    rows = [null_row_vals if r is None else r for r in rows]
-    return pd.DataFrame(rows, index=dfs.index)
+    return algo.feature.util.jitter_common.rows_to_dataframe(rows, dfs.index)

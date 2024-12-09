@@ -2,6 +2,7 @@ import datetime
 
 import pandas as pd, numpy as np
 from collections import deque
+import algo.feature.util.jitter_common
 import numba
 from numba import njit
 
@@ -18,12 +19,6 @@ class TimedJitterFeatureParam:
     def __str__(self):
         return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
 
-@njit
-def _get_ch(v1: float, v2: float) -> float:
-    if v1 == 0:
-        return 0
-    return (v2 - v1) / v1
-
 
 @njit
 def get_feature_for_window(values, window: int):
@@ -31,8 +26,6 @@ def get_feature_for_window(values, window: int):
     values is a 1 dimensional array.
     '''
     l = values.shape[0]
-    if l < window * 2:
-        return None
 
     ch_max = 0
     ch_min = 0
@@ -51,8 +44,8 @@ def get_feature_for_window(values, window: int):
         sum_v += v
         avg_v = sum_v * 1.0 / (i + 1)
 
-        ch_jump = _get_ch(min_v, last_v)
-        ch_drop = _get_ch(max_v, last_v)
+        ch_jump = algo.feature.util.jitter_common.get_ch(min_v, last_v)
+        ch_drop = algo.feature.util.jitter_common.get_ch(max_v, last_v)
 
         d = l - 1 - i
 
@@ -76,7 +69,7 @@ def get_feature_for_window(values, window: int):
 
     return {
         'value': values[-1],
-        'ch': _get_ch(values[0], values[-1]),
+        'ch': algo.feature.util.jitter_common.get_ch(values[0], values[-1]),
         'ch_max': ch_max, 'ch_min': ch_min,
         'avg_v_before_max_ch': avg_v_before_max_ch,
         'avg_v_before_min_ch': avg_v_before_min_ch,
@@ -103,10 +96,5 @@ def get_feature_df(dfs, feature_param: TimedJitterFeatureParam, value_column='cl
 
         rows.append(get_feature_for_window(np.array([p[1] for p in input_window_rows])))
 
-    null_row_vals = {}
-    for r in rows:
-        if r is None: continue
-        null_row_vals = {k: None for k in r.keys()}
-        break
-    rows = [null_row_vals if r is None else r for r in rows]
-    return pd.DataFrame(rows, index=dfs.index)
+    return algo.feature.util.jitter_common.rows_to_dataframe(rows, dfs.index)
+
