@@ -64,13 +64,10 @@ def _append_collective_feature(df, dfst_feature, feature_param: CollectiveJitter
         for column in df_feature.columns:
             dfst_with_collective_feature.loc[symbol, column] = df_feature[column].values
 
-        df_collective_feature_index_aligned = df_collective_feature[
-            (df_collective_feature.index >= dfst_feature.xs(symbol, level='symbol').index[0]) &
-            (df_collective_feature.index <= dfst_feature.xs(symbol, level='symbol').index[-1])
-            ]
+        index = df_feature.index
+        df_collective_feature_index_aligned = df_collective_feature.loc[index]
         for column in df_collective_feature.columns:
-            dfst_with_collective_feature.loc[symbol, f'{column}_collective'] = df_collective_feature_index_aligned[
-                column].values
+            dfst_with_collective_feature.loc[symbol, f'{column}_collective'] = df_collective_feature_index_aligned[column].values
         del df_feature
 
     del df_collective_feature
