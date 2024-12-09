@@ -21,7 +21,7 @@ class TimedJitterFeatureParam:
 
 
 @njit
-def get_feature_for_window(values, window: int):
+def get_feature_for_window(values):
     '''
     values is a 1 dimensional array.
     '''
@@ -32,14 +32,14 @@ def get_feature_for_window(values, window: int):
     distance_max_ch = 1
     distance_min_ch = 1
 
-    first_v, last_v = values[-window], values[-1]
+    first_v, last_v = values[0], values[-1]
     max_v, min_v = first_v, first_v
     sum_v = 0
     avg_v_before_max_ch, avg_v_before_min_ch = 0, 0
     v_ch_max_is_to, v_ch_min_is_to = max_v, min_v
     v_ch_max_is_from, v_ch_min_is_from = max_v, min_v
 
-    for i, v in enumerate(values[-window:]):
+    for i, v in enumerate(values):
         min_v, max_v = min(min_v, v), max(max_v, v)
         sum_v += v
         avg_v = sum_v * 1.0 / (i + 1)
@@ -64,7 +64,7 @@ def get_feature_for_window(values, window: int):
     smooth_window = 3
     smooth_window_half = smooth_window // 2
     past_v_smoothed = sum(values[:smooth_window]) / smooth_window
-    first_v_smoothed = sum(values[-window - smooth_window_half:-window + smooth_window - smooth_window_half]) / smooth_window
+    first_v_smoothed = sum(values[-smooth_window_half:smooth_window - smooth_window_half]) / smooth_window
     expected_v = first_v_smoothed + (first_v_smoothed - past_v_smoothed)
 
     return {
@@ -85,7 +85,7 @@ def get_feature_df(dfs, feature_param: TimedJitterFeatureParam, value_column='cl
     minimum_input_window_size = min(10, feature_param.window_minutes)
     input_window_rows = deque()
     for timestamp, row in dfs.iterrows():
-        input_window_rows.append((timestamp, row['close']))
+        input_window_rows.append((timestamp, row[value_column],))
         last_timestamp = input_window_rows[-1][0]
         while last_timestamp - input_window_rows[0][0] > datetime.timedelta(minutes=feature_param.window_minutes):
             input_window_rows.popleft()
