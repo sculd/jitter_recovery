@@ -38,3 +38,32 @@ def get_param_label_for_caching(param, label_prefix, label_suffix=None) -> str:
         ret = f"{ret}_{label_suffix}"
     return ret
 
+
+
+def _get_usdt_symbol_filter():
+    return lambda s: 'USDT' in s
+
+
+def get_dfst_feature(df, get_feature_df_func, feature_param, feature_label_prefix, symbol_filter=None, value_column='close'):
+    dfi = df.set_index(['timestamp', 'symbol'])
+    all_symbols = df.symbol.unique()
+    if symbol_filter is None:
+        symbol_filter = _get_usdt_symbol_filter()
+    all_symbols = [s for s in all_symbols if symbol_filter(s)]
+    print(f'all_symbols: {len(all_symbols)}')
+
+    dfst_feature = df.set_index(['symbol', 'timestamp'])
+    for i, symbol in enumerate(all_symbols):
+        dfs = dfi.xs(symbol, level=1)
+
+        df_feature = get_feature_df_func(dfs, feature_param=feature_param, value_column=value_column)
+        del dfs
+
+        print(f'{i} symbol: {symbol} {feature_label_prefix}')
+
+        for column in df_feature.columns:
+            dfst_feature.loc[symbol, column] = df_feature[column].values
+
+        del df_feature
+
+    return dfst_feature

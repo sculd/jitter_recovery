@@ -8,13 +8,13 @@ from numba import njit
 
 default_window_minutes = 5
 
-class TimedJitterFeatureParam:
+class TimedBurstFeatureParam:
     def __init__(self, window_minutes):
         self.window_minutes = window_minutes
 
     @staticmethod
     def get_default_param():
-        return TimedJitterFeatureParam(default_window_minutes)
+        return TimedBurstFeatureParam(default_window_minutes)
 
     def __str__(self):
         return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
@@ -29,6 +29,8 @@ def get_feature_for_window(values):
 
     ch_max = 0
     ch_min = 0
+    value_diff_for_ch_max = 0
+    value_diff_for_ch_min = 0
     distance_max_ch = 1
     distance_min_ch = 1
 
@@ -51,12 +53,14 @@ def get_feature_for_window(values):
 
         if ch_max <= ch_jump:
             distance_max_ch, ch_max = d, ch_jump
+            value_diff_for_ch_max = last_v - min_v
             v_ch_max_is_from = min_v
             v_ch_max_is_to = last_v
             avg_v_before_max_ch = avg_v
 
         if ch_min >= ch_drop:
             distance_min_ch, ch_min = d, ch_drop
+            value_diff_for_ch_min = last_v - max_v
             v_ch_min_is_from = max_v
             v_ch_min_is_to = last_v
             avg_v_before_min_ch = avg_v
@@ -67,6 +71,11 @@ def get_feature_for_window(values):
     first_v_smoothed = sum(values[-smooth_window_half:smooth_window - smooth_window_half]) / smooth_window
     expected_v = first_v_smoothed + (first_v_smoothed - past_v_smoothed)
 
+    i_at_max_head = l - 1 - distance_max_ch
+    i_at_min_head = l - 1 - distance_min_ch
+    stdev_before_max_head = np.std(values[:i_at_max_head])
+    stdev_before_min_head = np.std(values[:i_at_min_head])
+
     return {
         'value': values[-1],
         'ch': algo.feature.util.jitter_common.get_ch(values[0], values[-1]),
@@ -76,11 +85,13 @@ def get_feature_for_window(values):
         'v_ch_max_is_from': v_ch_max_is_from, 'v_ch_min_is_from': v_ch_min_is_from,
         'v_ch_max_is_to': v_ch_max_is_to, 'v_ch_min_is_to': v_ch_min_is_to,
         'distance_max_ch': distance_max_ch, 'distance_min_ch': distance_min_ch,
+        'stdev_before_max_head': stdev_before_max_head,
+        'stdev_before_min_head': stdev_before_min_head,
         'expected_v': expected_v,
     }
 
 
-def get_feature_df(dfs, feature_param: TimedJitterFeatureParam, value_column='close'):
+def get_feature_df(dfs, feature_param: TimedBurstFeatureParam, value_column='close'):
     rows = []
     minimum_input_window_size = min(10, feature_param.window_minutes)
     input_window_rows = deque()
