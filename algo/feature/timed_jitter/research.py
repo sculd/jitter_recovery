@@ -30,7 +30,7 @@ def get_dfst_feature(df, feature_param: TimedJitterFeatureParam, symbol_filter=N
         df_feature = algo.feature.timed_jitter.calculate.get_feature_df(dfs, feature_param, value_column=value_column)
         del dfs
 
-        print(f'{i} symbol: {symbol} (feature)')
+        print(f'{i} symbol: {symbol} ({_feature_label_prefix})')
 
         for column in df_feature.columns:
             dfst_feature.loc[symbol, column] = df_feature[column].values

@@ -1,6 +1,7 @@
 import pandas as pd
 
 import algo.feature.jitter.calculate
+import algo.feature.util.jitter_common
 from algo.feature.jitter.calculate import JitterFeatureParam
 
 default_jump_threshold, default_exit_drop_threshold = 0.10, -0.03
@@ -49,9 +50,9 @@ class Status:
                 self.highest_since_enter = value
 
             self.timedelta_since_position_enter += 1
-            self.ch_from_enter = algo.feature.jitter.calculate._get_ch(self.value_at_enter, value)
-            self.ch_from_lowest_since_enter = algo.feature.jitter.calculate._get_ch(self.lowest_since_enter, value)
-            self.ch_from_highest_since_enter = algo.feature.jitter.calculate._get_ch(self.highest_since_enter, value)
+            self.ch_from_enter = algo.feature.util.jitter_common.get_ch(self.value_at_enter, value)
+            self.ch_from_lowest_since_enter = algo.feature.util.jitter_common.get_ch(self.lowest_since_enter, value)
+            self.ch_from_highest_since_enter = algo.feature.util.jitter_common.get_ch(self.highest_since_enter, value)
 
             if self.in_position == -1:
                 if self.ch_from_highest_since_enter < -abs(trading_param.exit_drop_threshold):
