@@ -6,10 +6,8 @@ import typing
 default_window_minutes = 5
 
 @njit
-def get_ch(v1: float, v2: float) -> float:
-    if v1 == 0:
-        return 0
-    return (v2 - v1) / v1
+def get_ch(v1: np.array, v2: np.array) -> np.array:
+    return np.where(v1 != 0, (v2 - v1) / v1, 0)
 
 
 def rows_to_dataframe(rows: typing.List, index):

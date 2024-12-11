@@ -1,7 +1,8 @@
+import pandas as pd
+import numpy as np
 import algo.feature.jitter.calculate
 import algo.feature.util.research
 from algo.feature.jitter.calculate import JitterFeatureParam
-import matplotlib.pyplot as plt
 
 
 _feature_label_prefix = '(changes)'
@@ -17,25 +18,23 @@ def _get_usdt_symbol_filter():
 
 
 def get_dfst_feature(df, feature_param: JitterFeatureParam, symbol_filter=None, value_column='close'):
-    dfi = df.set_index(['timestamp', 'symbol'])
     all_symbols = df.symbol.unique()
     if symbol_filter is None:
         symbol_filter = _get_usdt_symbol_filter()
     all_symbols = [s for s in all_symbols if symbol_filter(s)]
     print(f'all_symbols: {len(all_symbols)}')
 
-    dfst_feature = df.set_index(['symbol', 'timestamp'])
-    for i, symbol in enumerate(all_symbols):
-        dfs = dfi.xs(symbol, level=1)
+    df_values = df[df.symbol.isin(set(all_symbols))].reset_index().pivot(index="timestamp", columns="symbol", values=value_column)
 
-        df_feature = algo.feature.jitter.calculate.get_feature_df(dfs, feature_param, value_column=value_column)
-        del dfs
+    window = feature_param.window
+    rows = [algo.feature.jitter.calculate.get_changes_1dim(
+        np.array([v for v in df_.to_numpy(dtype=np.float64)], dtype=np.float64)
+    ) for df_ in df_values.rolling(window, min_periods=window)]
 
-        print(f'{i} symbol: {symbol} ({_feature_label_prefix})')
+    feature_keys = list(rows[0].keys())
+    feature_values = sum([[r[k] for k in feature_keys] for r in rows], [])
+    feature_index = pd.MultiIndex.from_product([df_values.index, feature_keys], names=[df_values.index.name, 'feature'])
+    df_feature = pd.DataFrame(np.array(feature_values), index=feature_index, columns=df_values.columns)
 
-        for column in df_feature.columns:
-            dfst_feature.loc[symbol, column] = df_feature[column].values
+    return df_feature
 
-        del df_feature
-
-    return dfst_feature
