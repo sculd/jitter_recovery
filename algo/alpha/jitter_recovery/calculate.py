@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 import algo.feature.jitter.calculate
@@ -30,26 +31,50 @@ class JitterRecoveryTradingParam:
         return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
 
 class Status:
-    def __init__(self):
-        self.reset()
+    def __init__(self, cols):
+        self.cols = cols
+        self.reset(self.cols)
 
-    def reset(self):
-        self.in_position = 0
-        self.value_at_enter = 0
-        self.lowest_since_enter = 0
-        self.highest_since_enter = 0
-        self.timedelta_since_position_enter = 0
-        self.v_ch_max_is_to_when_enter, self.v_ch_min_is_to_when_enter = 0, 0
-        self.v_ch_max_is_from_when_enter, self.v_ch_min_is_from_when_enter = 0, 0
-        self.ch_from_enter = 0
-        self.ch_from_lowest_since_enter = 0
-        self.ch_from_highest_since_enter = 0
+    def reset(self, cols):
+        self.in_position = np.zeros(cols)
+        self.value_at_enter = np.zeros(cols)
+        self.lowest_since_enter = np.zeros(cols)
+        self.highest_since_enter = np.zeros(cols)
+        self.timedelta_since_position_enter = np.zeros(cols)
+        self.v_ch_max_is_to_when_enter, self.v_ch_min_is_to_when_enter = np.zeros(cols), np.zeros(cols)
+        self.v_ch_max_is_from_when_enter, self.v_ch_min_is_from_when_enter = np.zeros(cols), np.zeros(cols)
+        self.ch_from_enter = np.zeros(cols)
+        self.ch_from_lowest_since_enter = np.zeros(cols)
+        self.ch_from_highest_since_enter = np.zeros(cols)
 
     def __str__(self):    
         return ', '.join([f'{k}: {v}' for k, v in vars(self).items()])
 
     def update(self, features, trading_param: JitterRecoveryTradingParam) -> None:
         value = features['value']
+        is_in_position = self.in_position != 0
+        self.lowest_since_enter = np.where((is_in_position) & (value < self.lowest_since_enter), value, self.lowest_since_enter)
+        self.highest_since_enter = np.where((is_in_position) & (value > self.highest_since_enter), value, self.highest_since_enter)
+        self.timedelta_since_position_enter = np.where(is_in_position, self.timedelta_since_position_enter + 1, self.timedelta_since_position_enter)
+        self.ch_from_enter = np.where(is_in_position, algo.feature.util.jitter_common.get_ch(self.value_at_enter, value), self.ch_from_enter)
+        self.ch_from_lowest_since_enter = np.where(is_in_position, algo.feature.util.jitter_common.get_ch(self.lowest_since_enter, value), self.ch_from_lowest_since_enter)
+        self.ch_from_highest_since_enter = np.where(is_in_position, algo.feature.util.jitter_common.get_ch(self.highest_since_enter, value), self.ch_from_highest_since_enter)
+
+        is_pos_1_position = self.in_position == 1
+        self.in_position = np.where((is_pos_1_position) & ~trading_param.is_long_term & \
+                                    (self.ch_from_highest_since_enter < -abs(trading_param.exit_jumpt_threshold)), 0, self.in_position)
+        self.in_position = np.where((is_pos_1_position) & trading_param.is_long_term & \
+                                    (self.ch_from_highest_since_enter < -abs(trading_param.exit_jumpt_threshold)) & \
+                                    (self.timedelta_since_position_enter >= 5), 0, self.in_position)
+
+        is_neg_1_position = self.in_position == -1
+        self.in_position = np.where((is_neg_1_position) & ~trading_param.is_long_term & \
+                                    (self.ch_from_lowest_since_enter > abs(trading_param.exit_jumpt_threshold)), 0, self.in_position)
+        self.in_position = np.where((is_neg_1_position) & trading_param.is_long_term & \
+                                    (self.ch_from_lowest_since_enter > abs(trading_param.exit_jumpt_threshold)) & \
+                                    (self.timedelta_since_position_enter >= 5), 0, self.in_position)
+
+
         if self.in_position != 0:
             if value < self.lowest_since_enter:
                 self.lowest_since_enter = value
@@ -120,7 +145,7 @@ class Status:
                 self.ch_from_enter = 0
                 self.ch_from_lowest_since_enter = 0
             else:
-                self.reset()
+                self.reset(self.cols)
 
 
 

@@ -50,8 +50,8 @@ def fetch_dollar_candle(
 dataset_mode = market_data.ingest.bq.common.DATASET_MODE.OKX
 export_mode = market_data.ingest.bq.common.EXPORT_MODE.BY_MINUTE
 t_id = market_data.ingest.bq.common.get_full_table_id(dataset_mode, export_mode)
-date_str_from='2024-11-26'
-date_str_to='2024-11-27'
+date_str_from='2024-11-13'
+date_str_to='2024-11-14'
 fetch_dollar_candle(t_id, date_str_from=date_str_from, date_str_to=date_str_to)
 
 df = pd.read_parquet("okx_raw_1minutes.parquet")
