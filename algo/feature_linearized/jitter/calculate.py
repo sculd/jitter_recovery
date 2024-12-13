@@ -32,7 +32,7 @@ def get_changes_1dim(values):
     values is a 1 dimensional array.
     '''
     l = values.shape[0]
-    if l < 1: return None
+    cols = values.shape[1]
 
     '''
     if len(values_argg.shape) == 2:
@@ -41,21 +41,21 @@ def get_changes_1dim(values):
         values = values_argg
     '''
 
-    ch_max = 0
-    ch_min = 0
-    distance_max_ch = 1
-    distance_min_ch = 1
-    ch_since_max, ch_since_min = 0, 0
+    ch_max = np.zeros(cols)
+    ch_min = np.zeros(cols)
+    distance_max_ch = np.ones(cols)
+    distance_min_ch = np.ones(cols)
+    ch_since_max, ch_since_min = np.zeros(cols), np.zeros(cols)
 
     first_v, last_v = values[0], values[-1]
     max_v, min_v = values[0], values[0]
-    sum_v = 0
-    avg_v_before_max_ch, avg_v_before_min_ch = 0, 0
+    sum_v = np.zeros(cols)
+    avg_v_before_max_ch, avg_v_before_min_ch = np.zeros(cols), np.zeros(cols)
     v_ch_max_is_to, v_ch_min_is_to = max_v, min_v
     v_ch_max_is_from, v_ch_min_is_from = max_v, min_v
 
     for i, v in enumerate(values):
-        min_v, max_v = min(min_v, v), max(max_v, v)
+        min_v, max_v = np.minimum(min_v, v), np.maximum(max_v, v)
         sum_v += v
         avg_v = sum_v * 1.0 / (i + 1)
 
@@ -67,21 +67,25 @@ def get_changes_1dim(values):
 
         d = l - 1 - i
 
-        if ch_max <= ch_jump:
-            distance_max_ch, ch_since_max, ch_max = d, ch_since, ch_jump
-            v_ch_max_is_from = min_v
-            v_ch_max_is_to = v
-            avg_v_before_max_ch = avg_v
+        where_max_to_be_updated = ch_max <= ch_jump
+        distance_max_ch = np.where(where_max_to_be_updated, d, distance_max_ch)
+        ch_since_max = np.where(where_max_to_be_updated, ch_since, ch_since_max)
+        ch_max = np.where(where_max_to_be_updated, ch_jump, ch_max)
+        v_ch_max_is_from = np.where(where_max_to_be_updated, min_v, v_ch_max_is_from)
+        v_ch_max_is_to = np.where(where_max_to_be_updated, v, v_ch_max_is_to)
+        avg_v_before_max_ch = np.where(where_max_to_be_updated, avg_v, avg_v_before_max_ch)
 
-        if ch_min >= ch_drop:
-            distance_min_ch, ch_since_min, ch_min = d, ch_since, ch_drop
-            v_ch_min_is_from = max_v
-            v_ch_min_is_to = v
-            avg_v_before_min_ch = avg_v
+        where_min_to_be_updated = ch_min >= ch_drop
+        distance_min_ch = np.where(where_min_to_be_updated, d, distance_max_ch)
+        ch_since_min = np.where(where_min_to_be_updated, ch_since, ch_since_max)
+        ch_min = np.where(where_min_to_be_updated, ch_drop, ch_max)
+        v_ch_min_is_from = np.where(where_min_to_be_updated, max_v, v_ch_max_is_from)
+        v_ch_min_is_to = np.where(where_min_to_be_updated, v, v_ch_max_is_to)
+        avg_v_before_min_ch = np.where(where_min_to_be_updated, avg_v, avg_v_before_max_ch)
 
     return {
-        'value': values[-1],
-        'ch': algo.feature.util.jitter_common.get_ch(values[0], values[-1]),
+        'value': last_v,
+        'ch': algo.feature.util.jitter_common.get_ch(first_v, last_v),
         'ch_max': ch_max, 'ch_min': ch_min,
         'avg_v_before_max_ch': avg_v_before_max_ch,
         'avg_v_before_min_ch': avg_v_before_min_ch,
